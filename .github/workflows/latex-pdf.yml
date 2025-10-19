@@ -1,0 +1,100 @@
+name: Compile LaTeX to PDF
+
+on:
+  push:
+    branches:
+      - master  # Adjust if needed
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install LaTeX
+        run:
+          sudo apt-get update && sudo apt-get upgrade -y;
+          sudo apt-get install --fix-missing -y texlive texlive-latex-extra texlive-fonts-recommended texlive-lang-english texlive-luatex texlive-science texlive-fonts-extra texlive-bibtex-extra texlive-pictures texlive-xetex texlive-plain-generic
+
+      - name: Compile LaTeX files
+        run: |
+          mkdir -p public
+          for file in *.latex; do
+            lualatex -interaction=nonstopmode -output-directory=public "$file"
+          done
+
+      - name: List files before deployment
+        run: ls -R public
+
+      - name: Generate index.html
+        run: |
+          echo "<html>
+          <head>
+              <title>Lecture Notes</title>
+              <style>
+                  body {
+                      font-family: Arial, sans-serif;
+                      text-align: center;
+                      padding: 20px;
+                      background-color: #121212;
+                      color: #e0e0e0;
+                  }
+
+                  h1 {
+                      color: #d7d4cf;
+                  }
+
+                  ul {
+                      list-style-type: none;
+                      padding: 0;
+                  }
+
+                  li {
+                      margin: 10px 0;
+                  }
+
+                  a {
+                      text-decoration: none;
+                      color: #64b5f6;
+                      font-size: 18px;
+                      transition: color 0.2s;
+                  }
+
+                  a:hover {
+                      color: #bbdefb;
+                      text-decoration: underline;
+                  }
+              </style>
+              <!-- Cloudflare Web Analytics -->
+              <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "d21d8bf953444260923f9acabf4f3535"}'></script>
+              <!-- End Cloudflare Web Analytics -->
+          </head>
+          <body>
+              <h1>Lecture Notes</h1>
+              <ul>" > public/index.html
+          for file in $(ls public/*.pdf | sort -V); do
+            filename=$(basename "$file")
+            echo "<li><a href='$filename'>$filename</a></li>" >> public/index.html
+          done
+          echo "</ul></body></html>" >> public/index.html
+
+
+      - name: Upload PDFs to GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages  # <- This fixes the error
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      pages: write
+      id-token: write
+    steps:
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
+        id: deployment
