@@ -1,0 +1,4 @@
+*.pdf
+Makefile
+venv/
+homework/
