@@ -53,7 +53,7 @@ K. Ross.
 \subsection{Key concepts}%
 \label{sub:Key concepts}
 We will study the concepts in networking, such as governing paradigms, key ideas and principles, and fundamental
-networking tasks. Furthermore, we will also discuss \textbf{Domain Specific knowledge} such as ow the internet works,
+networking tasks. Furthermore, we will also discuss \textbf{Domain Specific knowledge} such as how the internet works,
 specific architectures / protocols, the contents of an IP packet, and \enquote{How can a single typo bring down a third
 of the internet?}
 
