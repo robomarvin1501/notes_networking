@@ -1,0 +1,96 @@
+\documentclass{article}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{mathtools}
+\usepackage{blindtext}
+\usepackage{multicol}
+\usepackage{graphicx}
+\usepackage{placeins}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage[bookmarks=true]{hyperref}
+\usepackage{bookmark}
+\usepackage{bbm}
+\usepackage{wrapfig}
+\usepackage[autostyle=true]{csquotes}
+\graphicspath{ {./images/} }
+\usepackage[bottom=0.5cm, right=1.5cm, left=1.5cm, top=1.5cm]{geometry}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{exercise}{Exercise}
+\newtheorem{example}{Example}
+\newtheorem{definition}{Definition}[section]
+
+\newcommand{\R}{\ensuremath{\mathbb{R}}}
+\newcommand{\N}{\ensuremath{\mathbb{N}}}
+\newcommand{\Z}{\ensuremath{\mathbb{Z}}}
+\newcommand{\p}{\ensuremath{\mathbb{P}}}
+\newcommand{\E}{\ensuremath{\mathbb{E}}}
+\newcommand{\F}{\ensuremath{\mathcal{F}}}
+\newcommand{\1}{\ensuremath{\mathbbm{1}}}
+\newcommand{\B}{\ensuremath{\mathbbm{B}}}
+
+\title{Lecture 2}
+\author{Gidon Rosalki}
+\date{2025-10-26}
+
+
+\begin{document}
+\maketitle
+
+\section{Taxonomy of communication networks}%
+\label{sec:Taxonomy of communication networks}
+Communication networks can be classified based off how the nodes exchange information. 
+\subsection{Broadcast communication network}\label{sec:broadcast_communication_network} % (fold)
+Information transmitted by \textit{any} node is received by \textit{every} other node in the network. This is usually
+only applicable in LANs (Local Area Networks), when using things such as WiFi, or classical Ethernet. Another such
+example is a lecture? \\ 
+This has a few problems. Firstly, there is a very limited range. Every node that wants to listen to node $a$ needs to be
+directly connected to it. Secondly, one needs to coordinate access to the shared communication medium, to nodes cannot
+transmit at once (not everyone can talk at the same time in a lecture). Finally, there is no privacy. Everyone can hear
+everything said, since you cannot say something directly to another person.
+% subsubsection Broadcast communication network (end)
+
+\subsection{Switched communication network}%
+\label{sub:Switched communication network}
+Here the information is switched, and only sent to specific nodes. Last lecture we saw an example of circuit switched
+communication networks. There are also \textit{packet switched} communication networks, also known as \textit{datagram}
+networks. Datagrams are comprised of 2 parts: \begin{enumerate}
+    \item Header: Instructions to the network for how to handle the packet 
+    \item Payload (body): The actual data being transferred to the recipient
+\end{enumerate}
+Each packet is switched independently, containing the complete header with the destination address. No resources are
+preallocated in advance. In this design, each packet needs to be a discrete, relatively small size. This way, if a
+packet is lost, relatively little data is lost. Additionally, if we were to send large packets, then it would take
+longer to handle them upon receipt. Smaller packets will reduce latency. However, we also do not want them to be too
+small, since then we would be sending large amounts of header data for insignificantly small amounts of payload data. 
+
+An important impact of using datagram communication is that we can have different packet sending patterns, they may
+arrive smoothly, there may be gaps as packets arrive in bursts, and so on. Due to bursts, sometimes the transient
+arrival rate is larger than the transmission rate, even if the long term average arrival rate is smaller than the
+transmission rate. How do we resolve this? One option is to drop packets. This is obviously not great, since the
+information is being sent for a reason, and this would just lose parts of it. A better approach is to add a buffer in
+which we save the excess packets, and read from it instead. Whenever new packets arrive, we add them to the end of the
+buffer, and read from the start of the buffer. This way, when the burst ends, we are still reading the data from the
+buffer, and have not lost packets. However, this has its downsides. Even with buffers (even if they should be of
+infinite size), packets can still be lost. Additionally, buffers can add latency to the operations, especially when the
+network is busy.
+
+\subsubsection{Slots per frame}\label{sec:slots_per_frame} % (fold)
+Let us assume that time is divided into frames, and that frames are divided into slots. \textit{Flows} generate packets
+during each frame, with a peak number of packets per frame being defined to be $P$. The average number of packets per
+frame is defined as $A$. A single flow must allocate $P$ slots in order to avoid packet drops. However, this is very
+wasteful, since $P$ might be much larger than $A$. To avoid this, many flows can exploit the \enquote{Law of Large
+Numbers}. 
+
+Law of Large Numbers: Consider any probability distribution, and take $N$ samples from said distribution (in this case,
+that is one set of packets from each flow). The theorem states that the sum of the samples is very close to $N \times
+A$, and gets percentage-wise closer as $N$ increase. Therefore, sharing between many flows (high aggregation) means that
+you only need to allocate slightly more than the average $A$ slots per frame.
+
+% subsubsection Slots per frame (end)
+
+\end{document}
