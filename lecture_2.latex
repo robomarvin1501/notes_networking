@@ -93,4 +93,97 @@ you only need to allocate slightly more than the average $A$ slots per frame.
 
 % subsubsection Slots per frame (end)
 
+\subsection{Comparison}\label{sub:comparison} % (fold)
+There are some advantages to \textbf{circuit} switching. There is a guaranteed bandwidth, with predictable communication
+performance, rather than \enquote{best effort} delivery, with no real guarantees. There is also a simple abstraction
+(for the application), with a reliable communication channel between hosts, and no worries about lost, or out of order
+packets. We also have simple forwarding (for the network devices) where the forwarding is based on a time slot, or
+frequency, with no need to inspect a packet header. Finally, there is a low overhead per packet, where we forward based
+off time slot or frequency, and have no headers on each packet. 
+
+There are also some disadvantages to circuit switching. There's wasted bandwidth, since bursty traffic leads to idle
+connections during the silent period. It is also unable to achieve gains from \enquote{statistical multiplexing}.
+Connections also get refused when there are insufficient resources, resulting in blocking, and at times it cannot offer
+a \enquote{good enough}  service to everybody. The network must store state, with network nodes storing per connection
+information. This means that failures are more disruptive. Additionally, we have a communication setup delay, where
+nothing can be sent before the connection is set up. It is also unable to avoid extra latency for small data transfers. 
+
+There is a reliability advantage to packet switching: Routers do not know about individual conversations, and when a
+router or link fails, it is easy to fail over to a different path. It is also more efficient, thanks to the ability to
+exploit statistical multiplexing (law of large numbers). Next, there is an advantage to how easy it is to deploy, it is
+easier for different parties to link their networks together because they are not promising to reserve resources for
+each other. However, packet switching must handle congestion, which is automatically handled in circuit switching. This
+is done through adding complexity to routers (buffering, sophisticated dropping), and so it is harder to provide good
+network services, since we cannot provide such good guarantees with regards to the delay, and bandwidth.
+% subsection Comparison (end)
+
+\section{Modularity}\label{sec:modularity} % (fold)
+\subsection{Computer modularity}\label{sub:computer_modularity} % (fold)
+In computers, we partition the system into modules, and abstractions. Well defined interfaces enable flexibility, where
+we hide the implementation, allowing it to change freely, but limiting their scope to enable the abstraction. We may
+also extend the functionality of a system by adding new modules. This allows for continuing evolution, and innovation.
+All of this work isolates assumptions, presenting high level abstractions, making implementation easier, but this comes
+at the cost of performance (consider the size of an asm hello world, vs the most basic C implementation).
+% subsection Computer modularity (end)
+
+\subsection{Network modularity}\label{sub:network_modularity} % (fold)
+This is like computer modularity, but the implementation is distributed across many machines (routers and hosts). One
+must decide how to break the system into modules (layering), where the modules are implemented (on the hosts, or on the
+network), and where the state is stores (fate sharing). 
+% subsection Network modularity (end)
+
+\subsubsection{Layering}\label{sec:layering} % (fold)
+From the bottom up, networking has the following tasks: \begin{itemize}
+    \item Electrons in the wire 
+    \item Bits in the wire 
+    \item Packets in the wire 
+    \item Delivering packets across a local network (LAN) with local addresses 
+    \item Delivering packages across multiple LANs, with global addresses 
+    \item Ensuring that packets arrive (handle losses)
+    \item Do something with the data
+\end{itemize}
+
+So how do we handle these tasks? By putting them into \enquote{layers}. Layering is a particularly strict form of
+modularity, where the interactions are limited to interfaces above and below. \\ 
+So, if we add in the layers that we will use:\begin{itemize}
+    \item Electrons in the wire 
+    \item \textbf{Bits in the wire (physical layer)}
+    \item Packets in the wire 
+    \item \textbf{Delivering packets across a local network (LAN) with local addresses (link layer)}
+    \item \textbf{Delivering packages across multiple LANs, with global addresses (network layer)}
+    \item \textbf{Ensuring that packets arrive (handle losses) (transport layer)}
+    \item \textbf{Do something with the data (application layer)}
+\end{itemize}
+
+In short, we have 5 layers, and the top two layers are implemented only by the hosts. \begin{itemize}
+    \item Application (host)
+    \item Transport (host)
+    \item Network 
+    \item Datalink 
+    \item Physical
+\end{itemize}
+
+Peers within each layer interact, and communication goes down to the physical network, then from the network peer to
+peer, before finally rising up to the relevant layer. This means that when my app sends a message, it goes down to the
+physical layer, and to the router. The router then raises it up to the network layer, understands what there is to do,
+before it goes back to the physical layer, and is transmitted to the recipient, where the message is raised up to the
+application layer once more.
+% subsubsection Layering (end)
+
+\subsubsection{Protocol}\label{sec:protocol} % (fold)
+The \textit{protocol} handles all the communication, but what is a protocol? It is an agreement on how to communicate,
+handling the exchange of data, and coordinating sharing resources. Protocols specify \textit{syntax} and
+\textit{semantics}. The \textit{syntax} is how the protocol is structured, handling the format, and message order, where
+the \textit{semantics} are how to respond to various messages and events. \\ We have various examples of protocols in
+real life, such as how we ask questions in class, or having a conversation, or perhaps answering the phone.
+
+Since we want many machines to work together, it is very important to \textbf{standardise} the protocol, and for
+everyone to follow the same protocol. Very small modifications can make very significant differences, and potentially
+even prevent it from working. Standards allow us to have multiple implementations of the same protocol. To create this
+standardisation, we have the Internet Engineering Task Force (IETF).
+% subsubsection Protocol (end)
+
+
+% section Modularity (end)
+
 \end{document}
