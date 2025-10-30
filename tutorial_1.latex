@@ -1,0 +1,277 @@
+\documentclass{article}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{mathtools}
+\usepackage{blindtext}
+\usepackage{multicol}
+\usepackage{graphicx}
+\usepackage{placeins}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage[bookmarks=true]{hyperref}
+\usepackage{bookmark}
+\usepackage{bbm}
+\usepackage{wrapfig}
+\usepackage[autostyle=true]{csquotes}
+\graphicspath{ {./images/} }
+\usepackage[bottom=0.5cm, right=1.5cm, left=1.5cm, top=1.5cm]{geometry}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{exercise}{Exercise}
+\newtheorem{example}{Example}
+\newtheorem{definition}{Definition}[section]
+
+\newcommand{\R}{\ensuremath{\mathbb{R}}}
+\newcommand{\N}{\ensuremath{\mathbb{N}}}
+\newcommand{\Z}{\ensuremath{\mathbb{Z}}}
+\newcommand{\p}{\ensuremath{\mathbb{P}}}
+\newcommand{\E}{\ensuremath{\mathbb{E}}}
+\newcommand{\F}{\ensuremath{\mathcal{F}}}
+\newcommand{\1}{\ensuremath{\mathbbm{1}}}
+\newcommand{\B}{\ensuremath{\mathbbm{B}}}
+
+\title{Tutorial 1}
+\author{Gidon Rosalki}
+\date{2025-10-30}
+
+
+\begin{document}
+\maketitle
+\section{Introduction}\label{sec:introduction} % (fold)
+There will be 4 exercises, with submission in pairs. There will be a 5 point bonus if the exercise is typed, and there
+will be 2 interviews per pair through the semester, which will have a binary pass / fail marking system. A pass is
+required in order for the homework to be accepted.
+
+The final grade is comprised of 25\% from the homework, 75\% from the final exam, with a two point bonus for attendance
+in lectures. 2 lectures can be missed to still get the bonus. In order to pass the course one needs at least 55\% in the
+final exam, a homework average of at least 55\%, and a final grade of at least 60\%. 
+
+We are going to be studying the basic building blocks of modern computer networks. Computers communicate with clearly
+defined languages, called protocols. We will mostly be discussing established protocols, internet architecture. Towards
+the end we will begin discussing things likes the performance analysis of network protocols, mobile communication, and
+security, which has become a bigger issue since the internet was not originally founded on a basis of security.
+
+% section Introduction (end)
+
+\section{Probability}\label{sec:probability} % (fold)
+Today we will be discussing probability. The concept of probability is the measure of the chance that some event will
+occur, for example, \enquote{a coin toss will land on heads}. Most things in life (and in CS) are not deterministic, so
+we need to model when events could happen. \\
+In networking, it is mostly a game of chance, a transmission over WiFi may get lost in background noise, a link can
+fail, so transmitted messages may not arrive. We will mostly use probability for modeling link / packet failure rates,
+and analysing efficiency of protocols / networks.
+
+\subsection{Definitions}\label{sub:definitions} % (fold)
+$\Omega$ is the \textbf{sample space}, with elements $\omega_i$. It describes the states in our system. It may be either
+\textit{finite}, or \textit{infinite}. An example is in a coin toss it may be $\Omega = \left\{H, T\right\}$. An
+\textbf{event} is a subset $A \subseteq \Omega$, so symbolises a set of possible outcomes. Events are disjoint if they
+have no intersection, and the complement of the event is every other event in $\Omega$: $\overline{A} = \Omega \setminus
+A$. \\ 
+A \textbf{probability function} is a function $\p: X \to \left[0, 1\right]$ that satisfies the following: \begin{itemize}
+    \item $\forall A \subseteq \Omega\ \p \left[A\right] \in \left[0, 1\right]$
+    \item $\p \left[\Omega\right] = 1$
+\end{itemize}
+For a set of disjoint events $\left\{A_1, \dots, A_n\right\}$ it holds that: \[
+    \p \left[\displaystyle\bigcup_{i = 1}^{n}A_i\right] = \displaystyle\sum_{i = 1}^{n} \p \left[A_i\right]
+\]
+We have \textbf{conditional probability} to denote the chance that $B$ will occur, if we \textit{already know} that $A$
+occurred: \begin{gather*}
+    A, B \subseteq \Omega,\ \p \left(B\right) > 0\ :\ \p \left(B | A\right) = \displaystyle\frac{\p \left(A \cap
+    B\right)}{\p \left(B\right)} \\
+    \p \left(A \cap B\right) = \p \left(A | B\right) \p \left(B\right)
+\end{gather*}
+This has some useful properties: \begin{itemize}
+    \item $A$ is independent of $B$ if \[
+            \p \left(A | B\right) = \p \left(A\right) \implies \p \left(A \cap B\right) = \p \left(A\right) \cdot \p
+            \left(B\right)
+        \]
+    \item $\p \left(A \cup B\right) \leq \p \left(A\right) + \p \left(B\right)$
+    \item Bayes theorem: \[
+            \p \left(A | B\right) = \displaystyle\frac{\p \left(B | A\right) \p \left(A\right)}{\p \left(B\right)}
+        \]
+\end{itemize}
+
+We also have complete probability: For a disjoint set \begin{align*}
+    \Omega &= \left\{B_i\right\}_{i=1}^n \\
+    \p \left(A\right) &= \displaystyle\sum_{i = 1}^{n}\p \left(A | B_i\right) \cdot \p \left(B_i\right)
+\end{align*}
+
+\subsubsection{Example}\label{sec:example} % (fold)
+There are only two types of packets in some network: \enquote{Good} packets – survive in the network at least T seconds with
+probability e−T
+”Bad” packets – survive in the network at least T seconds with
+probability e−1000T
+The probability of creating a good packet is p
+% TODO 16
+% subsubsection Example (end)
+% subsection Definitions (end)
+
+% section Probability (end)
+
+\section{Random variables}\label{sec:random_variables} % (fold)
+A random variable $X$ is a function $X : \Omega \to \R$. It may be said that $X$ describes some numerical property that
+our sample space could have. It may either be discrete (like a coin toss), or continuous (such as time). For example, in
+a coin toss $\Omega = \left\{H, T\right\}$, we may define a random variable (called an indicator in this case) $I_H$:
+\[
+    I_H = \begin{cases}
+        1, &\text{ if }\omega = H\
+        0, &\text{ if }\omega = T\
+    \end{cases}
+\]
+
+For a sample space $\OMega$, and a random variable $X$, we have \[
+    \p \left(X = x\right) = \p \left(\left\{\omega \subseteq \Omega : X \left(\omega\right) = x\right\}\right)
+\]
+% section Random variables (end)
+
+\section{Expected values}\label{sec:expected_values} % (fold)
+The \textbf{expected value} is the \enquote{averaged} value of a series of experiments: \[
+    \E \left[X\right] = \displaystyle\sum_{i}^{}x_i \cdot \p \left(X = x_i\right)
+\]
+It has some useful properties: \begin{gather*}
+    \E \left[\displaystyle\sum_{i}^{}a_i X_i\right] = \displaystyle\sum_{i}^{}a_i \E \left[X_i\right]
+    Var \left[X\right]= \E \left[\left[X - \E \left[X\right]^2\right]\right] = \E \left[X^2\right] - \E \left[X\right]^2
+\end{gather*}
+
+There are some useful random variables, which one should know, since they come up a lot: \begin{table}[H]
+     \centering
+     \begin{tabular}{|c|c|c|c|c|}
+         \hline
+          & Bernoulli & Binomial & Geometric & Poisson \\ \hline
+         Intuition & Can either fail or succeed & $n$ independent Bernoulli experiments, with $X$ returning the sum & We
+         do independent Bernoulli, until we succeed, $X$ is the number of tries & Counting the number of events that
+         occurred in some period of time \\ \hline
+          &  &  &  \\ \hline
+          &  &  &  \\ \hline
+          &  &  &  \\ \hline
+     \end{tabular}
+     \caption{}
+\end{table} 
+% TODO 22
+
+
+\subsection{Examples}\label{sub:examples} % (fold)
+We want to send a message from node $S$ to node $D$ which are connected by a chain of $n$ links. The probability of any
+link to fail is $p$ (independently). At time $T = 0$, $S$ sends a message to $D$. 
+\begin{example}[]
+    What is the probability that node $D$ got the message?
+    \begin{proof}[Solution]
+        This is the probability that no link would fail. $p$ is the probability of a given link failing, so $1 - p$ is
+        the probability of the link succeeding. To send a message, all $n$ links successfully send the message, the
+        probability of which is independent of each other, so the probability is the union of them all succeeding, ie
+        $\left(1-p\right)^n$
+    \end{proof}
+\end{example}
+
+\begin{example}[]
+    Assume that if the message does not reach $D$, then $S$ will send it again until it succeeds. What is the expected
+    number of packets we need to send until node $D$ gets the packet?
+    \begin{proof}[Solution]
+        We define $X$ as \enquote{the number of packets to send from $S$ until a packet reaches $D$ successfully} – we
+        note that $X \sim Geo \left(\left(1 - p\right)^n\right)$ and so: \[
+            \E \left[X\right] = \displaystyle\frac{1}{\left(1 - p\right)^n}
+        \]
+    \end{proof}
+\end{example}
+
+\begin{example}[]
+    We now add the following mechanism: Every node keeps on sending the message to its next hop until it reaches it,
+    except the first node that sends only once. What is the probability that node $D$ got the message?
+    \begin{proof}[Solution]
+        All the other hops will eventually succeed, so just the probability that the first succeeds $(1 − p)$.
+    \end{proof}
+\end{example}
+
+\begin{example}[]
+    What is the expected number of packets that a single node will send until success?
+
+    \begin{proof}[Solution]
+        Let us define $X \sim Geo \left(1 - p\right)$, and so $\E \left[X\right]= \displaystyle\frac{1}{1 - p}$
+    \end{proof}
+\end{example}
+% subsection Examples (end)
+
+\subsection{Continuous random variables}\label{sub:continuous_random_variables} % (fold)
+In the case that the results of our experiment are continuous (for example, measuring time), we need
+continuous random variables. This is similar to the area under a curve, and the probability of any singleton is $0$. We
+are only interested in probabilities such as $\p \left(a \leq X \leq b\right)$. It behaves like discrete random
+variables, however: \begin{gather*}
+    \p \left(a \leq X \leq b\right) = \displaystyle\int_{a}^{b} f \left(x\right) dx \\
+    \displaystyle\int_{-\infty}^{\infty}f \left(x\right) dx = 1 \\
+    \E \left[X\right] = \displaystyle\int_{-\infty}^{\infty} x f \left(x\right) dx \\ 
+    Var \left[X\right] = \displaystyle\int_{-\infty}^{\infty} \left(x - \E \left[X\right]\right)^2 dx
+\end{gather*}
+
+% TODO 28
+% subsection Continuous random variables (end)
+% section Expected values (end)
+
+\section{Memorylessness}\label{sec:memorylessness} % (fold)
+Some random variables have the following property: \[
+    \p \left(x > S + t | x > t\right) = \p \left(x > S\right)
+\]
+Examples of thiis are geometric, and exponential random variables. Intuitively, it means that our placement in time does
+not matter. For example, the time it takes for the first customer to arrive, vs the time it takes for the next customer
+after the 9th customer. 
+
+The random (Stochastic) process: We would like to model a series of events in a non deterministic way, so observing the
+same process twice might (and should) give us different results (even if the initial starting point is the same). The
+process models the evolution of a system through time, where we assyme that the system is represented by some random
+variable. In this course, we only care about discrete processes. The total number of successes after $n$ steps in a
+stochastic process of i.i.d. Bernoulli trials has a binomial distribution. \\
+In an actual network the time a packet leaves an intermediate node (switch/router) is not pre-determined. Hence, we will
+usually model the packets going in and out of nodes as a stochastic process. We could also model power/traffic demand and
+available resources to account for them. 
+
+Formally: Syppose we have random variables $X_i > 0$, that represent the time it takes for the $i$th packet to arrive.
+Let us define: \begin{gather*}
+    S_1 = X_1 \\ 
+    S_2 = S_1 + X_2 \\ 
+    \vdots \\
+    S_i = S_{i - 1} + X_i
+\end{gather*}
+We call $S_i$ the \textbf{arrival epoch} (the specific time at which an event occurs), $N \left(t\right) = n$ for $S_n
+\leq t < S_{n + 1}$. \\ 
+
+A \textbf{counting process} is a random process that counts the number of arrival epochs until time $t$. A counting
+process is defined by $\left\{N_t | t \geq 0\right\}$, where we have the following: \begin{itemize}
+    \item $N_0 = 0$ 
+    \item $N_t \geq 0$ 
+    \item $s \leq t \implies N_s \leq N_t$ (monotonicity), and if $s < t$, then $N_t - N_s$ is the number of events that
+        occurred in $\left(s, t\right]$
+\end{itemize}
+Consider as an example, the number of customers that arrive in a store. 
+
+A \textbf{Poisson process} $\left\{N_t | t \geq 0\right\}$, witha  rate of $\lambda$ is a counting process, where in
+addition: \begin{itemize}
+    \item Independent increments: Number of events in any two disjoint intervals is independent
+    \item Stationary increments: The number of events in any interval of length $t$ is a Poisson random variable with
+        parameter $\lambda t$ (depends on the interval’s length and not on its timing). ie. $\E \left[N_t\right] =
+        \lambda t$
+    \item No bunching: The probability of $> 1$ arrivals in a tiny interval is negligible
+\end{itemize}
+
+Given this, is the number of people boarding the bus a Poisson process? \\
+No. The passengers board in groups (at bus stops), and during rush hour more people board.
+
+The inter-arrival times between events in a Poisson counting process are I.I.D and have an exponential distribution with
+parameter $\lambda$. 
+
+\begin{example}[Poisson process]
+    In each interval of length $T$, the number of transmitted packets is a Poisson random variable with parameter $gT$.
+    What is the probabikity to have only a single packet transmitted? 
+
+    \begin{proof}[Solution]
+        Recall $X_o \sim Poi \left(gt\right)$, and $\p_{t = T} \left(X = i\right) =
+        \displaystyle\frac{\left(gT\right)^i}{i!}e^{-gT}$. Let us define a random variable $X$ that represents the
+        number of packets transmitted at some interval. Then, $X \sim Poi \left(gT\right)$ and we get: \[
+            \p_{t = T} \left(X = 1\right) = gT \cdot e^{-gT}
+        \]
+    \end{proof}
+\end{example}
+% section Memorylessness (end)
+
+\end{document}
