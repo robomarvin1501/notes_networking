@@ -15,6 +15,7 @@
 \usepackage{bookmark}
 \usepackage{bbm}
 \usepackage{wrapfig}
+\usepackage{tabularx}
 \usepackage[autostyle=true]{csquotes}
 \graphicspath{ {./images/} }
 \usepackage[bottom=0.5cm, right=1.5cm, left=1.5cm, top=1.5cm]{geometry}
@@ -61,7 +62,7 @@ Today we will be discussing probability. The concept of probability is the measu
 occur, for example, \enquote{a coin toss will land on heads}. Most things in life (and in CS) are not deterministic, so
 we need to model when events could happen. \\
 In networking, it is mostly a game of chance, a transmission over WiFi may get lost in background noise, a link can
-fail, so transmitted messages may not arrive. We will mostly use probability for modeling link / packet failure rates,
+fail, so transmitted messages may not arrive. We will mostly use probability for modelling link / packet failure rates,
 and analysing efficiency of protocols / networks.
 
 \subsection{Definitions}\label{sub:definitions} % (fold)
@@ -100,12 +101,25 @@ We also have complete probability: For a disjoint set \begin{align*}
 \end{align*}
 
 \subsubsection{Example}\label{sec:example} % (fold)
-There are only two types of packets in some network: \enquote{Good} packets – survive in the network at least T seconds with
-probability e−T
-”Bad” packets – survive in the network at least T seconds with
-probability e−1000T
-The probability of creating a good packet is p
-% TODO 16
+There are only two types of packets in some network: \enquote{Good} packets which survive in the network at least $T$
+seconds with probability $e^{-T}$, and \enquote{Bad} packets, which survive in the network at least $T$ seconds with
+probability $e^{-1000T}$. The probability of creating a good packet is $p$.
+
+\begin{example}[]
+    Assuming a single (either good or bad) packet was created at time $T = 0$, what is the probability that it still
+    exists at time $T = t$? 
+    \begin{proof}[Solution]
+        Let us define the following events: \begin{gather*}
+            A = \text{ a packet survived for $t$ seconds} \\
+            B = \text{ a good packet was created} \\
+        \end{gather*}
+        Thus: \begin{align*}
+            \p \left(A\right) &= \p \left(A | B\right) \cdot \p \left(B\right) + \p \left(A | \overline{B}\right) \cdot
+            \p \left(\overline{B}\right) \\ 
+                              &= e^{-t} \cdot p + e^{-1000t} \cdot \left(1 - p\right)
+        \end{align*}
+    \end{proof}
+\end{example}
 % subsubsection Example (end)
 % subsection Definitions (end)
 
@@ -117,12 +131,12 @@ our sample space could have. It may either be discrete (like a coin toss), or co
 a coin toss $\Omega = \left\{H, T\right\}$, we may define a random variable (called an indicator in this case) $I_H$:
 \[
     I_H = \begin{cases}
-        1, &\text{ if }\omega = H\
-        0, &\text{ if }\omega = T\
+        1, &\text{ if }\omega = H \\
+        0, &\text{ if }\omega = T \\
     \end{cases}
 \]
 
-For a sample space $\OMega$, and a random variable $X$, we have \[
+For a sample space $\Omega$, and a random variable $X$, we have \[
     \p \left(X = x\right) = \p \left(\left\{\omega \subseteq \Omega : X \left(\omega\right) = x\right\}\right)
 \]
 % section Random variables (end)
@@ -138,19 +152,23 @@ It has some useful properties: \begin{gather*}
 
 There are some useful random variables, which one should know, since they come up a lot: \begin{table}[H]
      \centering
-     \begin{tabular}{|c|c|c|c|c|}
+     \begin{tabularx}{\textwidth}{|p{0.15\textwidth}|X|X|X|X|}
          \hline
           & Bernoulli & Binomial & Geometric & Poisson \\ \hline
          Intuition & Can either fail or succeed & $n$ independent Bernoulli experiments, with $X$ returning the sum & We
          do independent Bernoulli, until we succeed, $X$ is the number of tries & Counting the number of events that
          occurred in some period of time \\ \hline
-          &  &  &  \\ \hline
-          &  &  &  \\ \hline
-          &  &  &  \\ \hline
-     \end{tabular}
+         Probability mass function & $\p \left(X = 1\right) = p \land \p \left(X = 0\right) = 1 - p$ & $\p \left(X = k\right) = \binom{n}{k} p^k \left(1 - p\right)^{n - k}$ & $\p \left(X = k\right) =
+             \left(1 - p\right)^{k - 1} p$ & $\p \left(X = k\right) = \frac{\lambda^k}{k!}e^{-\lambda}$ \\ \hline
+             Notation & $X \sim Ber \left(p\right)$ & $X \sim Bin \left(n, p\right)$ & $X \sim Geo \left(p\right)$ & $X
+             \sim Pois \left(\lambda\right)$ \\ \hline
+             Exp & $\E \left[X\right] = p$ & $\E \left[X\right] = np$ & $\E \left[X\right] = \frac{1}{p}$ & $\E
+             \left[X\right] = \lambda$ \\ \hline
+         Var & $Var \left[X\right] = p \left(1 - p\right)$ & $Var \left[X\right] = np \left(1 - p\right)$ & $Var
+         \left[X\right] = \frac{1 - p}{p^2}$ & $Var \left[X\right] = \lambda$ \\ \hline
+     \end{tabularx}
      \caption{}
 \end{table} 
-% TODO 22
 
 
 \subsection{Examples}\label{sub:examples} % (fold)
@@ -205,7 +223,27 @@ variables, however: \begin{gather*}
     Var \left[X\right] = \displaystyle\int_{-\infty}^{\infty} \left(x - \E \left[X\right]\right)^2 dx
 \end{gather*}
 
-% TODO 28
+
+\begin{table}[H]
+     \centering
+     \begin{tabular}{|c|c|c|c|}
+         \hline
+          & Uniform & Exponential & Gaussian (Normal) \\ \hline
+         Notation & $X \sim Uni \left(a, b\right)$ & $X \sim Exp \left(\lambda\right)$ & $X \sim N \left(\mu, \sigma\right)$ \\ \hline
+         Probability distribution function & $f \left(x\right) = \begin{cases}
+            \displaystyle\frac{1}{b - a}, &\text{ if }x \in \left[a, b\right]\\
+            0, &\text{ else }
+         \end{cases}$ & $f \left(x\right) = \begin{cases}
+         \lambda e^{-\lambda x}, &\text{ if }x > 0\\
+         0, &\text{ else }
+     \end{cases}$ & $f \left(x\right) = \frac{1}{\sqrt{2 \pi \sigma} } e^{-\frac{\left(x - \mu\right)^2}{2\sigma^2} }$ \\ \hline
+         Exp & $\E \left[X\right] = \frac{a + b}{2} $ & $\E \left[X\right] = \frac{1}{\lambda} $ & $\E \left[X\right] =
+         \mu$ \\ \hline
+         Var & $Var \left[X\right] = \frac{\left(b - a\right)^2}{12} $ & $Var \left[X\right] = \frac{1}{\lambda^2} $ &
+         $Var \left[X\right] = \sigma$ \\ \hline
+     \end{tabular}
+     \caption{}
+\end{table} 
 % subsection Continuous random variables (end)
 % section Expected values (end)
 
@@ -213,20 +251,21 @@ variables, however: \begin{gather*}
 Some random variables have the following property: \[
     \p \left(x > S + t | x > t\right) = \p \left(x > S\right)
 \]
-Examples of thiis are geometric, and exponential random variables. Intuitively, it means that our placement in time does
+Examples of this are geometric, and exponential random variables. Intuitively, it means that our placement in time does
 not matter. For example, the time it takes for the first customer to arrive, vs the time it takes for the next customer
 after the 9th customer. 
 
+\subsection{Stochastic processes}\label{sub:stochastic_processes} % (fold)
 The random (Stochastic) process: We would like to model a series of events in a non deterministic way, so observing the
 same process twice might (and should) give us different results (even if the initial starting point is the same). The
-process models the evolution of a system through time, where we assyme that the system is represented by some random
+process models the evolution of a system through time, where we assume that the system is represented by some random
 variable. In this course, we only care about discrete processes. The total number of successes after $n$ steps in a
 stochastic process of i.i.d. Bernoulli trials has a binomial distribution. \\
 In an actual network the time a packet leaves an intermediate node (switch/router) is not pre-determined. Hence, we will
 usually model the packets going in and out of nodes as a stochastic process. We could also model power/traffic demand and
 available resources to account for them. 
 
-Formally: Syppose we have random variables $X_i > 0$, that represent the time it takes for the $i$th packet to arrive.
+Formally: Suppose we have random variables $X_i > 0$, that represent the time it takes for the $i$th packet to arrive.
 Let us define: \begin{gather*}
     S_1 = X_1 \\ 
     S_2 = S_1 + X_2 \\ 
@@ -245,7 +284,7 @@ process is defined by $\left\{N_t | t \geq 0\right\}$, where we have the followi
 \end{itemize}
 Consider as an example, the number of customers that arrive in a store. 
 
-A \textbf{Poisson process} $\left\{N_t | t \geq 0\right\}$, witha  rate of $\lambda$ is a counting process, where in
+A \textbf{Poisson process} $\left\{N_t | t \geq 0\right\}$, with a rate of $\lambda$ is a counting process, where in
 addition: \begin{itemize}
     \item Independent increments: Number of events in any two disjoint intervals is independent
     \item Stationary increments: The number of events in any interval of length $t$ is a Poisson random variable with
@@ -262,7 +301,7 @@ parameter $\lambda$.
 
 \begin{example}[Poisson process]
     In each interval of length $T$, the number of transmitted packets is a Poisson random variable with parameter $gT$.
-    What is the probabikity to have only a single packet transmitted? 
+    What is the probability to have only a single packet transmitted? 
 
     \begin{proof}[Solution]
         Recall $X_o \sim Poi \left(gt\right)$, and $\p_{t = T} \left(X = i\right) =
@@ -272,6 +311,8 @@ parameter $\lambda$.
         \]
     \end{proof}
 \end{example}
+
+% subsection Stochastic processes (end)
 % section Memorylessness (end)
 
 \end{document}
