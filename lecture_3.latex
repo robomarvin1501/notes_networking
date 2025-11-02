@@ -1,0 +1,129 @@
+\documentclass{article}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{mathtools}
+\usepackage{blindtext}
+\usepackage{multicol}
+\usepackage{graphicx}
+\usepackage{placeins}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage[bookmarks=true]{hyperref}
+\usepackage{bookmark}
+\usepackage{bbm}
+\usepackage{wrapfig}
+\usepackage{tabularx}
+\usepackage[autostyle=true]{csquotes}
+\graphicspath{ {./images/} }
+\usepackage[bottom=0.5cm, right=1.5cm, left=1.5cm, top=1.5cm]{geometry}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{exercise}{Exercise}
+\newtheorem{example}{Example}
+\newtheorem{definition}{Definition}[section]
+
+\newcommand{\R}{\ensuremath{\mathbb{R}}}
+\newcommand{\N}{\ensuremath{\mathbb{N}}}
+\newcommand{\Z}{\ensuremath{\mathbb{Z}}}
+\newcommand{\p}{\ensuremath{\mathbb{P}}}
+\newcommand{\E}{\ensuremath{\mathbb{E}}}
+\newcommand{\F}{\ensuremath{\mathcal{F}}}
+\newcommand{\1}{\ensuremath{\mathbbm{1}}}
+\newcommand{\B}{\ensuremath{\mathbbm{B}}}
+
+\title{Lecture 3}
+\author{Gidon Rosalki}
+\date{2025-11-02}
+
+
+\begin{document}
+\maketitle
+
+\section{Protocols}\label{sec:protocols} % (fold)
+The \textit{protocol} handles all the communication, but what is a protocol? It is an agreement on how to communicate,
+handling the exchange of data, and coordinating sharing resources. Protocols specify \textit{syntax} and
+\textit{semantics}. The \textit{syntax} is how the protocol is structured, handling the format, and message order, where
+the \textit{semantics} are how to respond to various messages and events. \\ We have various examples of protocols in
+real life, such as how we ask questions in class, or having a conversation, or perhaps answering the phone.
+
+Since we want many machines to work together, it is very important to \textbf{standardise} the protocol, and for
+everyone to follow the same protocol. Very small modifications can make very significant differences, and potentially
+even prevent it from working. Standards allow us to have multiple implementations of the same protocol. To create this
+standardisation, we have the Internet Engineering Task Force (IETF).
+
+Below is an example for the HTTP application level protocol. This is built upon the TCP packet protocol, and each layer
+of the image represents that layer's abstraction. The HTTP message, and the TCP message are both simply that, but the
+TCP segment is made up of IP packets sent between routers, which are built upon different physical interfaces.
+\begin{figure}[H]
+    \center
+    \includegraphics[scale=0.2]{lecture_3_http_message}
+    \caption{HTTP message}
+\end{figure}
+
+Each layer has to add its own header. The common case is that we add 20 bytes for the TCP header, 20 for the IP header,
+and 14 for the Ethernet header, resulting in an overall overhead of \textbf{54 bytes}.
+% section Protocols (end)
+
+\section{OSI model}\label{sec:osi_model} % (fold)
+The OSI model is a model through which we describe the layers. It is comprised of 5: \begin{enumerate}
+    \item Physical 
+    \item (Data) Link
+    \item (Inter) Network
+    \item Transport
+    \item Application
+\end{enumerate}
+
+Each layer involves discussing its \textit{service}, ie what it does, the \textit{service interface}, which is how to
+access the service, and the \textit{protocol}, or how the peers communicate. A layer can have many implementations,
+allowing innovation. For example, HTTP in the application layer, vs SMTP.
+
+\subsection{Physical layer}\label{sub:physical_layer} % (fold)
+\textbf{Service}: Move bits between 2 systems, connected by a physical link. This handles low level physics, that is
+scary to us computer scientists. \\ 
+\textbf{Interface}: Specifies how to send, and receive bits, including things such as timing, and how to avoid both
+transmitting at the same time, thus losing data. \\
+\textbf{Protocols}: A coding scheme that is used to represent bits, voltage levels, the during of a bit, and so on. \\ 
+\textbf{Examples}: Optical, wireless, Ethernet cables...
+% subsection Physical layer (end)
+
+\subsection{(Data) link layer}\label{sub:_data_link_layer} % (fold)
+\textbf{Service}: Enable hosts to exchange message \enquote{frames}, using abstract (but local) addresses, rather than
+direct physical connections. Here there are many hosts on the same LAN, and send messages to their local IP addresses,
+rather than down the physical wire. \\ 
+\textbf{Interface}: Send frames to other local hosts (ie, hosts on the same LAN), and receive messages addressed to this
+host. \\ 
+\textbf{Protocols responsible for}: Media Access Control (MAC) \\ 
+\textbf{Examples}: Ethernet, 802.11 (wireless protocol), Frame Relay, ATM 
+% subsection (Data) link layer (end)
+
+\subsection{(Inter) Network}\label{sub:_inter_network} % (fold)
+\textbf{Service}: Deliver packets to specified destinations. This is between local networks, not just on \textit{our}
+local network. This uses abstract global addresses, across multiple layer 2 networks. For example, this may be from
+Ethernet, to 802.11, to Frame Relay, to ATM. \\ 
+\textbf{Interface}: Send packets to specified internetwork destinations, and receive packets destined for the end host. \\ 
+\textbf{Protocols responsible for}: Routing \\ 
+\textbf{Examples}: IP (currently on IPv4, but about to move for IPv6! It's only taken us 20+ years...)
+% subsection (Inter) Network (end)
+
+\subsection{Transport layer}\label{sub:transport_layer} % (fold)
+\textbf{Service}: Communication between \textit{processes}. This performs multiplexing of communication between hosts,
+and perhaps includes ensuring reliability of transportation, and rate adaptation for when the network is too busy. \\ 
+\textbf{Interface}: Send a message to a specific process, at a given destination. A local process will receive messages
+sent to it. \\ 
+\textbf{Protocols responsible for}: Reliability, flow control, packetisation of large messages. \\ 
+\textbf{Examples}: TCP, UDP
+% subsection Transport layer (end)
+
+\subsection{Application layer}\label{sub:application_layer} % (fold)
+\textbf{Service}: Any service provided to the end user \\
+\textbf{Interface}: Depends on the application \\ 
+\textbf{Protocol}: Depends on the application \\ 
+\textbf{Examples}: Zoom, SMTP (email), HTTP (websites), Halo, BitTorrent, and many, many, more
+% subsection Application layer (end)
+
+% section OSI model (end)
+
+\end{document}
