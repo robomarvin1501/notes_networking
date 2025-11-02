@@ -124,6 +124,83 @@ sent to it. \\
 \textbf{Examples}: Zoom, SMTP (email), HTTP (websites), Halo, BitTorrent, and many, many, more
 % subsection Application layer (end)
 
+\subsection{Narrow waist}\label{sub:narrow_waist} % (fold)
+This returns us to the narrow waste problem. As we saw, all the layers have multiple possibilities, and protocols, aside
+from the Network layer, which is just IP. This is considered the narrow waist. This provides massive interoperability,
+but has massively limited innovation. This only really occurs at this layer (there are also some problems at the
+transport layer) since this is the lowest level layer, where each package is required to get to many other pieces of
+hardware. A new application layer protocol is fine, since it's handled purely in the application software, and in the
+link, and physical layers it's less of an issue, since it only matters as far as getting the packet to the next piece of
+hardware. However, the network layer sends a packet end to end, often with hardware optimisations, thus providing severe
+restrictions on our ability to update the protocol involved. 
+% subsection Narrow waist (end)
+
 % section OSI model (end)
+
+\section{Building the internet from the bottom up}\label{sec:building_the_internet_from_the_bottom_up} % (fold)
+As discussed, the OSI model has 5 layers. We will ignore the application, and physical layers, since they are not the
+focus of this course, we will return to the transport layer, and the network layer first requires interconnected LANs,
+so: 
+\subsection{Challenge 1: communicating in a LAN}\label{sub:challenge_communicating_in_a_lan} % (fold)
+\subsubsection{Terminology}\label{sec:terminology} % (fold)
+End hosts, and relays, are called \textit{nodes}. Communication channels that connect adjacent nodes along communication
+paths are called \textit{links}. There are wired, and wireless links, and also logical links (for broadcasting). A
+\textit{layer 2 packet} is a \textit{frame}, and it encapsulates a datagram. The data link layer has the responsibility
+of transmitting datagrams from one node, to an adjacent node, over a link. 
+
+The links may all be different, for example a first link over Ethernet, the second 802.11, and so on. Each link provides
+different services, a first may provide reliability, where the second does not.
+% subsubsection Terminology (end)
+
+\subsubsection{Single link: Services}\label{sec:single_link_services} % (fold)
+The channel is a shared medium, and \enquote{MAC} addresses are used in frame headers to identify the source, and
+destination. Note that this is \textbf{distinct} from IP addresses. It would also be logical for this to provide
+reliable delivery between adjacent nodes. For example, perhaps it should provide error detection / correction, and
+retransmit when necessary. This should be seldom used when we have a low bit error link (such as fibre, or twisted
+pairs). Contrast this to wireless links, which would have exceedingly high error rates, and would thus have to handle
+this.
+
+We implement the link layer at each and every host, in its \enquote{adaptor}, often a network card. This could be an
+Ethernet card, an 802.11 card. The network card implements the link, and physical layers. It is attached into the host
+system's buses, and is a combination of hardware, software, and firmware.
+
+When communicating, the sending side encapsulates datagrams in frames, and adds error checking bits, along with
+ensuring reliable data transfer. The receiving side then looks for errors (for example, in the error checking bits), and
+extracts the datagram, passing it on to the upper layers, through the system buses, at the receiving side.
+
+This all seems fairly simple, but consider. What happens when there are 2 or more simultaneous transmissions by the
+nodes, on the same link? This same link is a single, shared, broadcast channel, and a node receiving two or more signals
+simultaneously will result in a \textbf{collision}. To handle this we have the \textit{Multiple Access Protocol}. This
+is a distributed algorithm, that determines how nodes share a channel. That is to say, it determines when a node can
+transmit. It is important to note that the communication about channel sharing must use the channel itself, since we do
+not have a second channel in which to coordinate. Throughout the 90s, the channel was often a bus topology. This means
+that all nodes are effectively connected to the same wire. This also means that all nodes are in the same collision
+domain, and their messages may all collide with each other. Today, we tend to use the \textbf{star} topology. There is
+an \textbf{active switch} in the centre, which connects individually over a separate Ethernet protocol link to the
+nodes. This way, nodes do not collide with each other. Everything only needs to handle communication with 2 nodes on the
+same link, which is much simpler than many more, and enables much higher data transfer rates. Switches will be discussed
+more later. 
+% subsubsection Single link: Services (end)
+
+\subsubsection{Multiple Access Protocols}\label{sec:multiple_access_protocols} % (fold)
+Let us consider an ideal MAP, of rate $R$ bps: \begin{enumerate}
+    \item When one node wants to transmit, it can send at rate $R$
+    \item When $M$ nodes want to transmit, each can send at average rate $\displaystyle\frac{R}{M}$
+    \item It is fully decrentelised, so there is no special node to coordinate transmissions 
+    \item There is no synchronisation of clocks, or slots 
+    \item Since we are having very pretty dreams, let's make it simple as well, while we are at it
+\end{enumerate}
+
+A \textit{Random Access Protocol} is when a node has a packet to send, it can transmit at full channel data rate
+$R$, with no a priori coordination among nodes. Two nodes transmitting at once causes a collision, so a random MAC
+protocol specifies: \begin{itemize}
+    \item How to detect collisions 
+    \item How to recover from collisions (eg, via delayed retransmission)
+\end{itemize}
+There are some examples of these random MAC protocols, such as slotted ALOHA, ALOHA, CSMA, CSMA/CD, CSMA/CA.
+% subsubsection Multiple Access Protocols (end)
+
+% subsection Challenge 1: communicating in a LAN (end)
+% section Building the internet from the bottom up (end)
 
 \end{document}
