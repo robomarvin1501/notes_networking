@@ -1,0 +1,259 @@
+\documentclass{article}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{mathtools}
+\usepackage{blindtext}
+\usepackage{multicol}
+\usepackage{graphicx}
+\usepackage{placeins}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage[bookmarks=true]{hyperref}
+\usepackage{bookmark}
+\usepackage{bbm}
+\usepackage{wrapfig}
+\usepackage{tabularx}
+\usepackage[autostyle=true]{csquotes}
+\graphicspath{ {./images/} }
+\usepackage[bottom=0.5cm, right=1.5cm, left=1.5cm, top=1.5cm]{geometry}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{exercise}{Exercise}
+\newtheorem{example}{Example}
+\newtheorem{definition}{Definition}[section]
+
+\newcommand{\R}{\ensuremath{\mathbb{R}}}
+\newcommand{\N}{\ensuremath{\mathbb{N}}}
+\newcommand{\Z}{\ensuremath{\mathbb{Z}}}
+\newcommand{\p}{\ensuremath{\mathbb{P}}}
+\newcommand{\E}{\ensuremath{\mathbb{E}}}
+\newcommand{\F}{\ensuremath{\mathcal{F}}}
+\newcommand{\1}{\ensuremath{\mathbbm{1}}}
+\newcommand{\B}{\ensuremath{\mathbbm{B}}}
+
+\title{Tutorial 2 - ALOHA}
+\author{Gidon Rosalki}
+\date{2025-11-06}
+
+
+\begin{document}
+\maketitle
+
+\section{Introduction}\label{sec:introduction} % (fold)
+
+% section Introduction (end)
+
+
+
+\section{Open-Systems Interconnect (OSI) model}\label{sec:open_systems_interconnect_osi_model} % (fold)
+The OSI model provides an abstract way of representing the functions needed in a communication system. It divides the
+networking tasks into separate layers. This model has 7, but sometimes there are 5, depending on how they are divided.
+Each layer uses the abstractions provided by the layer below it, and provides services to the one above it. 
+
+\begin{table}[H]
+     \centering
+     \begin{tabular}{|c|c|c|c|}
+         \hline
+         \# & Layer Name & Data Unit & Function \\ \hline
+         1 & Physical & Bit & Transmit and receive raw bits over some physical medium \\ \hline
+         2 & Data link & Frame & Transmission of data frames between 2 nodes \\ \hline
+         3 & Network & Packet & Structure and manage multi node network (addressing, routing, etc.) \\ \hline
+         4 & Transport & Segment & Transmission (reliable or not) of segments between points in the network (ack'ing,
+         etc.) \\ \hline
+         5 & Session & Data & Manage a continuous communication session \\ \hline
+         6 & Presentation & Data & Translation of data between a networking and an application (e.g. encryption /
+         decryption) \\ \hline 
+         7 & application & Data & High level APIs between network applications (e.g. GET, POST) \\ \hline 
+     \end{tabular}
+     \caption{OSI 7 layer model}
+\end{table} 
+In this tutorial, and the next, we are going to focus on layer 2, but in the future, we will discuss all the layers
+(aside from 1, we can leave that for the physicists and the engineers). 
+
+Examples: \begin{itemize}
+    \item Layer 7 (Application): DNS (turn website names to addresses), HTTP (send web pages)
+    \item Layer 4 (Transport): TCP (reliably send segments), UDP (unreliably send segments)
+    \item Layer 3 (Network): IP (sending and receiving of packets)
+    \item Layer 2 (Data Link): MAC
+\end{itemize}
+
+% section Open-Systems Interconnect (OSI) model (end)
+
+\section{Layer 2 - Data link}\label{sec:layer_data_link} % (fold)
+These operate over a share medium, where all nodes in the network broadcast and listen on the same channel. When a node
+broadcasts, it uses the full link bandwidth. If two nodes broadcast at the same time, there is a \textbf{collision}, and
+the data is lost. We ignore the noise on the channel. \\
+Consider a protest. Only one person can talk at once, since when multiple people start talking, it all devolves into
+noise, and no information can be gathered (other than maybe lots of people have lots of things to say).
+
+\subsection{Definitions}\label{sub:definitions} % (fold)
+\begin{table}[H]
+     \centering
+     \begin{tabular}{|c|c|c|c|}
+         \hline
+         Name & Explanation & Notation & Units \\ \hline
+         Bandwidth & The maximum rate of data transfer on the communication channel & B & $\displaystyle\frac{bit}{sec}$ \\ \hline
+         Throughput & The fraction of the bandwidth used to send traffic & - & None \\ \hline
+         Goodput & The fraction of the bandwidth used to successfully send traffic & $\eta$ & None \\ \hline
+     \end{tabular}
+     \caption{Definitions table}
+\end{table} 
+
+Note that \[
+    \eta = \displaystyle\frac{\text{total average effective bandwidth usage}}{\text{total bandwidth}} =
+    \displaystyle\frac{\text{total average effective time}}{\text{total time}}
+\]
+So, assuming transmission uses the full bandwidth, $0 \leq \eta \leq 1$. An example of throughput vs goodput would be
+the background noise within a class. Throughput is the amount of noise made, but the goodput is how much information is
+communicated.
+
+\subsubsection{Example question}\label{sec:example_question} % (fold)
+Let us assume that the link bandwidth is $B = 5$. Given a packet size of 30 bits, how long does it take to send a
+packet? \[
+    T = \displaystyle\frac{\left|\text{packet}\right|}{B} = \displaystyle\frac{30}{5} \cdot
+    \displaystyle\frac{\text{bit}}{\frac{\text{bit}}{\text{second}}} = 6s
+\]
+
+Assume that we need to transmit 3 packets, with a size of 30 bits, within 2 seconds. What is the required bandwidth? \[
+    B = \displaystyle\frac{\left|\text{packet}\right|}{B} = \displaystyle\frac{3 \cdot 30}{2} = 45
+    \displaystyle\frac{\text{bits}}{\text{sec}}
+\]
+% subsubsection Example question (end)
+% subsection Definitions (end)
+% section Layer 2 - Data link (end)
+
+\section{ALOHA}\label{sec:aloha} % (fold)
+The ALOHA protocol is a protocol, originally developed in Hawaii for creating a local network that could span their
+islands. It is the first wireless network (undersea cabling was not good enough yet), and is the basis of the Ethernet,
+WiFi, and the 1G mobile network protocols. It makes the following assumptions: \begin{itemize}
+    \item $N$ nodes in the network. We usually analyse for $N \to \infty$
+    \item $B$ - link bandwidth
+    \item $L$ - number of bits in a frame
+    \item Time is divided into slots of length $T = \displaystyle\frac{L}{B}$ $T$ is the time required for a message to
+        be transmitted. Successful transmissions use the entire bandwidth, and the entire time slow.
+    \item A node can start transmitting \textit{only} at the beginning of a slot. If a message arrives in the middle of
+        a slot, then it will be sent at the beginning of the next slot 
+    \item \textbf{Collisions detection}: When a node \textit{finishes} transmitting a message, it can detect collisions
+        (if there are, it can then resend the message in the future)
+    \item Propagation (physical delay) time is discarded
+\end{itemize}
+
+There are two main types of ALOHA that will be discussed, pure vs slotted: \begin{itemize}
+    \item Pure ALOHA assumes that every node has its own clock (since synchronising clocks is an expensive task)
+    \item Slotted ALOHA assumes that all nodes are \textit{somehow} synchronised. We will not discuss how.
+\end{itemize}
+
+\subsection{Binomial vs Poisson ALOHA}\label{sub:binomial_vs_poisson_aloha} % (fold)
+Let there be $X_p$, the number of transmission messages in a time segment $T$. 
+\subsubsection{Binomial assumption}\label{sec:binomial_assumption} % (fold)
+We assume that there are $n$ end points, with probability $p$: \[
+    X_P \sim Bin \left(n, p\right)
+\]
+% subsubsection Binomial assumption (end)
+
+\subsubsection{Poisson assumption}\label{sec:poisson_assumption} % (fold)
+There are $\infty$ end points, together with a rate of $\lambda$ per $T$: \[
+    X_P \sim Poi \left(\lambda T\right)
+\]
+% subsubsection Poisson assumption (end)
+Recall that if $n$ is large, and $p$ is small, then $Bin \left(n, p\right) \approx Poi \left(\lambda\right)$, where $np
+= \lambda$. 
+% subsection Binomial vs Poisson ALOHA (end)
+
+We're going to analyse 4 models, Binomial slotted, and pure ALOHA, and Poisson slotted, and pure ALOHA. 
+
+\subsection{Binomial slotted}\label{sub:binomial_slotted} % (fold)
+We assume that at any given time, all nodes have something to transmit, and each node tries to transmit in each slot
+with probability $p_{send}$. What is the goodput of this protocol? Note that each successful message effectively uses
+the entire bandwidth. 
+
+Since all the slots are the same, let us consider a single time slot. We need to find how much time (the expectation),
+was spent on \textit{successful transmission} in this slot. If we define $X_p$ as the number of transmissions in a
+\textbf{single}
+time slot, then we want to find \[
+    P_{suc} = \p \left[X_p = 1\right]
+\]
+Where $X_p \sim Bin \left(n, p_{send}\right)$
+The probability for a successful frame: \begin{align*}
+    P_{bin} &= \binom{n}{x} p^x \left(1 - p\right)^{n - x} \\ 
+    P_{suc} &= \p \left[X_p = 1\right] = np_{send} \left(1 - p_{send}\right)^{n -1} \\ 
+\end{align*}
+Let us denote $T_{suc}$ as the time spent on successful transmission in a single slot. What is $\E
+\left[T_{suc}\right]$? \begin{align*}
+    \E \left[T_{suc}\right] = T \cdot P_{suc} + 0 \cdot \left(1 - P_{suc}\right) = T \cdot P_{suc}
+\end{align*}
+and the goodput of the network will be \[
+    \eta = \displaystyle\frac{\E \left[T_{suc}\right]}{T} = P_{suc} = np_{send} \left(1 - p_{send}\right)^{n - 1}
+\]
+
+
+To find the relation between successful, and unsuccessful slots. We can ask how many slots on average do we have before
+there is a successful slot? Let us define $X_p$ as the number of tries. We will note that \[
+    X_p \sim Geo \left(p_{suc}\right) \land \E \left[X_p\right] = \displaystyle\frac{1}{p_{suc}}
+\]
+So the goodput of the network is \[
+    \eta = \displaystyle\frac{T}{T \cdot \left(\frac{1}{P_{suc}}\right)} = P_{suc}
+\]
+
+We want to maximise the goodput of $\eta$ where: \[
+    \eta = \p \left[X_p\right] = 1 = np_{send} \left(1 - p_{send}\right)^{n - 1}
+\]
+Let us denote $p = p_{send}$, and solve for $p$: \begin{align*}
+    \displaystyle\frac{d}{dp} np \left(1 - p\right)^{n - 1}  &= n \cdot \left(1 - p\right)^{n - 1} + np \cdot \left(n -
+    1\right) \left(1 - p\right)^{n - 2} \cdot \left(-1\right) \\ 
+                                                            &= n \cdot \left(1 - p\right)^{n - 2} \cdot \left[\left(1 - p\right) - p \cdot \left(n - 1\right)\right] \\ 
+                                                            &= \\ 
+        \implies \displaystyle\frac{d}{dp}\eta &= 0 \\ 
+        \implies p &= \displaystyle\frac{1}{n}
+\end{align*}
+We get that $p^* = \displaystyle\frac{1}{n}$ maximises $\eta$. 
+
+How good is $p^*$? Well, let us set $p_{send}$ as above, and take $n \to \infty$. We want to maximise the goodput of
+$\eta$. \begin{align*}
+    \displaystyle\lim_{n \to \infty} \eta \left(p^*\right) &= \lim_{n \to \infty} np^* \left(1- p^*\right)^{n - 1} \\ 
+                                                           &= \lim_{n \to \infty} \left(1 -
+                                                           \displaystyle\frac{1}{n}\right)^{n - 1} \\ 
+                                                           &= \displaystyle\frac{1}{e} \\ 
+                                                           &\approx 0.37
+\end{align*}
+Slotted ALOHA gives us freedom to fully distribute our system, but 0.37 is not very efficient. 
+% subsection Binomial slotted (end)
+
+\subsection{Pure ALOHA}\label{sub:pure_aloha} % (fold)
+Here, each station transmits at the beginning of when \textit{it} thinks the slot begins. Since the clocks are not
+synchronised, this can be at any time. Given a fixed packet length of $T$, then there is a vulnerable time period (when
+there can be a collision) of $2T$: For $T$ before transmission begins, and $T$ from when the packet begins. If there is
+a collision, then the transmitter waits a random amount of time before retransmitting. 
+
+What is the probability of a successful frame?
+\begin{align*}
+    P_{suc} &= \p \left[\text{some node transmitted}\right] \cap \p \left[\text{no other node transmitted in 2
+    overlapping slots}\right] \\ 
+            &= \p \left[\text{some node transmitted}\right] \cdot \p \left[\text{no other node transmitted in 2
+            overlapping slots}\right] \\ 
+            &= np_{send} \left(\left(1 - p_{send}\right)^2\right)^{n - 1} \\ 
+            &= np_{send} \left(1 - p_{send}\right)^{2 \left(n - 1\right)}
+\end{align*}
+
+Goodput: Let us define a random variable \[
+    T_{suc} = \begin{cases}
+        T, &\text{ successful slot }\\
+        0, &\text{ else }\\
+    \end{cases}
+\]
+Therefore $\E \left[T_{suc}\right] = T \cdot P_{suc}$, and therefore \[
+    \eta = \displaystyle\frac{\E \left[T_{suc}\right]}{T} = P_{suc} = np_{send} \left(1 - p_{send}\right)^{2 \left(n - 1\right)}
+\]
+The maximum lies in $p_{send} = \displaystyle\frac{1}{2n - 1}$, and the goodput is $\displaystyle\frac{1}{2e}$, which is
+\textbf{half} the goodput of slotted ALOHA. 
+% subsection Pure ALOHA (end)
+% section ALOHA (end)
+
+\section{Questions}\label{sec:questions} % (fold)
+
+% section Questions (end)
+
+\end{document}
