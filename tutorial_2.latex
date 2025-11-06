@@ -205,7 +205,7 @@ Let us denote $p = p_{send}$, and solve for $p$: \begin{align*}
     \displaystyle\frac{d}{dp} np \left(1 - p\right)^{n - 1}  &= n \cdot \left(1 - p\right)^{n - 1} + np \cdot \left(n -
     1\right) \left(1 - p\right)^{n - 2} \cdot \left(-1\right) \\ 
                                                             &= n \cdot \left(1 - p\right)^{n - 2} \cdot \left[\left(1 - p\right) - p \cdot \left(n - 1\right)\right] \\ 
-                                                            &= \\ 
+                                                            &\vdots \\ 
         \implies \displaystyle\frac{d}{dp}\eta &= 0 \\ 
         \implies p &= \displaystyle\frac{1}{n}
 \end{align*}
@@ -253,6 +253,127 @@ The maximum lies in $p_{send} = \displaystyle\frac{1}{2n - 1}$, and the goodput 
 % section ALOHA (end)
 
 \section{Questions}\label{sec:questions} % (fold)
+
+\begin{exercise}
+    Host C and host D are connected in 2 different networks, the upper network runs Slotted ALOHA, and contains two more
+    nodes, where the lower network runs pure ALOHA, and contains 3 more nodes. D never sends messages, and when C has a
+    message to send to D, it chooses which network to use, and sends it with a probability of $q$. C chooses the upper
+    network with a probability of $p$, and in every slot, each other node X sends with a probability of $q$. 
+
+    \begin{figure}[H]
+        \center
+        \includegraphics[scale=0.2]{tutorial_2_question_one}
+        \caption{ALOHA network}
+    \end{figure}
+
+    C has one attempt to send the message to D, what is the probability that the message will arrive at D? 
+    \begin{proof}[Solution]
+        For the upper network, which is slotted, \begin{align*}
+            P_{suc} &= \p \left[\text{C sends a message}\right] \cdot \p \left[\text{the others do not send}\right] \\ 
+                    &= q \cdot \left(1 - q\right)^2
+        \end{align*}
+        For the lower network, which is pure \begin{align*}
+            P_{suc} &= q \cdot \p \left[\text{No other transmission for two slots}\right] \\ 
+                    &= q \cdot \p \left[\text{No other transmission for two slots}\right] \\ 
+                    &= q \cdot \left(\left(1 - q\right)^2\right)^3 \\ 
+                    &= q \cdot \left(1 - q\right)^6
+        \end{align*}
+        So \begin{align*}
+            p_{suc}^{total} &= p \cdot p_{suc}^{upper} + \left(1 - p\right) p_{suc}^{lower} \\ 
+                            &= q \left(p \left(1 - q\right)^2 + \left(1 - p\right)\left(1 - q\right)^6\right)
+        \end{align*}
+    \end{proof}
+
+    Now C tries to send at the beginning of each slot. What is the goodput of the network? 
+    \begin{proof}[Solution]
+        \begin{align*}
+            P_{suc}^{lower} &= \binom{3}{1} q \left(1 - q\right)^{2 + 2} \\ 
+                            &= 3q \left(1 0 q\right)^4 \\ 
+            P_{suc}^{upper} &= \binom{2}{1} q \left(1 - q\right) \\ 
+            \eta &= \left(1 - p\right) P_{suc}^{lower} + p \cdot P_{suc}^{upper}
+        \end{align*}
+    \end{proof}
+\end{exercise}
+
+\begin{exercise}
+    There are $2n$ nodes in the network. The first $n$ run pure ALOHA, with slots of length $2T$. The last $n$ run slotted
+    ALOHA with slots of length $T$. Every node sends a message at the beginning of each slot with probability $p$, and
+    the message that is sent takes all the slot. 
+
+    We choose a random slot. What is the probability of a node that runs Slotted ALOHA to send a message successfully in
+    this slot? 
+    \begin{proof}[Solution]
+        We need the end host to send a message, which is probability of $p$, that the other nodes will not send
+        messages in this slot: $\left(1 - p\right)^{n - 1}$, and that the pure ALOHA will not send for \textbf{three} slots:
+        $\left(1 - p\right)^{3n}$. Thus: \[
+            p_{suc} = p \cdot \left(1 - p\right)^{n - 1} \cdot \left(1 - p\right)^{3n}
+        \]
+    \end{proof}
+
+    We choose a random slot. What is the probability of a node that runs Pure ALOHA to send a message successfully in
+    this slot? 
+    \begin{proof}[Solution]
+        Let us divide into cases, where the message overlaps a single slot, and where it overlaps 2 slots. \begin{itemize}
+            \item In the case where the message overlaps a single slot, the probabilities are as follows: the end host
+                sends a message: $p$, the other slotted ALOHA nodes will not send any message at this slot: $\left(1 -
+                p\right)^n$, the other pure ALOHA nodes will not send any messages for two slots: $\left(1 - p\right)^{2
+                \left(n - 1\right)}$, thus \[ 
+                    P_{suc} = p \cdot \left(1 - p\right)^n \cdot \left(1 - p\right)^{2 \left(n - 1\right)} 
+                \]
+            \item In the case where the message overlaps two slots, then the probabilities are: the end host will send a
+                message: $p$, the other slotted nodes will not send any message for \textbf{two} slots: $\left(1 -
+                p\right)^{2n}$, the other pure ALOHA nodes will not send any messages for two slots $\left(1 -
+                p\right)^{2 \left(n - 1\right)}$, and thus \[
+                    P_{suc} = p \cdot \left(1 - p\right)^n \left(1 - p\right)^{2 \left(n - 1\right)}
+                \]
+        \end{itemize}
+    \end{proof}
+
+    Let us now assume that the nodes that ran pure ALOHA start running slotted, with slots of length $T$, such that the
+    slots are synchronised. What is the goodput of the network? \begin{proof}[Solution]
+        If we look at some slot (of $2T$), there are some options for successful transmissions within it: \begin{enumerate}
+            \item Successful packet of length $2T$
+            \item Successful packet of length $T$, only in the first slot 
+            \item Successful packet of length $T$ at the second slot only
+            \item 2 successful packets of length $T$, one in each slot
+        \end{enumerate}
+
+        Let us consider each case: \begin{enumerate}
+            \item Successful packet of length $2T$: For this, we need exactly one of the $n$ nodes running slotted
+                ALOHA, will attempt to send: \[
+                    \binom{n}{1} p \left(1 - p\right)^{n - 1} = np \left(1 - p\right)^{n - 1}
+                \] 
+            All the other nodes running pure ALOHA will not send: $\left(1 - p\right)^{2n}$
+            Both these events are independent, so: \[
+                np \left(1 - p\right)^{n - 1} \left(1 - p\right)^{2n}
+                \]
+
+            \item Successful packet of length $T$, only in the first slot: For this we need exactly one node with length
+                $T$ to transmit: \[
+                    \binom{n}{1} p \left(1 0 p\right)^{n - 1} = np \left(1 - p\right)^{n - 1}
+                \]
+                All the other nodes will not send: $\left(1 - p\right)^n$, and we need the second slot to fail, which is
+                the inverse of one $T$ node will send: $1 - np \left(1 - p\right)^{n - 1}$. We multiply the independent
+                factors and get: \[
+                    np\left(1 − p\right)^{n−1}\left(1 − p\right)^n \left(1 − np \left(1 − p\right)^{n−1}\right)
+                \]
+            \item Same as the successful packet in the second slot only
+            \item 2 successful packets of length $T$, one in each slot: For this we need exactly one of the nodes
+                transmits a packet of length $T$ in the first slot: \[
+                    \binom{n}{1} p \cdot \left(1 - p\right)^{n - 1} = np \cdot \left(1 - p\right)^{n - 1}
+                \]
+                We also need the same thing in the second slot, and that all the nodes that transmit $2T$ will not send:
+                $\left(1 - p\right)^n$. Since both events are independent, we can multiply them: \[
+                    \left(np \left(1 - p\right)^{n - 1}\right)^2 \left(1 - p\right)^n
+                \]
+        \end{enumerate}
+        This leaves us with an overall goodput of \[
+            \eta = A + \displaystyle\frac{1}{2}B + \displaystyle\frac{1}{2}C + D
+        \]
+    \end{proof}
+\end{exercise}
+
+
 
 % section Questions (end)
 
