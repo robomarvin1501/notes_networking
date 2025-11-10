@@ -186,7 +186,7 @@ more later.
 Let us consider an ideal MAP, of rate $R$ bps: \begin{enumerate}
     \item When one node wants to transmit, it can send at rate $R$
     \item When $M$ nodes want to transmit, each can send at average rate $\displaystyle\frac{R}{M}$
-    \item It is fully decrentelised, so there is no special node to coordinate transmissions 
+    \item It is fully decentralised, so there is no special node to coordinate transmissions 
     \item There is no synchronisation of clocks, or slots 
     \item Since we are having very pretty dreams, let's make it simple as well, while we are at it
 \end{enumerate}
