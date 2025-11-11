@@ -141,11 +141,84 @@ $\displaystyle\frac{1}{2e} \approx 0.18$.
 Carrier Sense Multiple Access type protocols \textit{listen} before they transmit. If a channel is sensed as idle,
 transmit the entire frame, and if it is busy, defer the transmission. This is like hearing someone else is talking, and
 waiting for them to finish before you speak. \\ 
+
+\subsubsection{CSMA/CD}\label{sec:csma_cd} % (fold)
 Collisions can still occur, the propagation delay means that two nodes may not hear each others transmission. If there
 is a collision, then the entire packet transmission time is wasted. It should be noted that distance and propagation
 delay both play a significant role in determining collision probability.
+
+So how do we add collision detection? In a wired LAN we measure the signal strength, and compare the strengths of
+transmitted vs received signals. This is harder in wireless, since the received signal strength is overwhelmed by local
+transmission strength. Should we detect a collision, then the colliding transmissions are aborted, reducing the channel
+wastage.
+
+Adding this in, when a host has a packet to transmit, it checks that the line is quiet before transmitting. If it
+detects a collision, then it should stop transmitting, wait a random time, and return to the beginning. This together is
+called \textbf{CSMA/CD}.
+
+To ensure that a packet is transmitted without a collision, a host must be able to detect a collision \textit{before} it
+finishes transmitting a packet. As a result, we can see that for a host to detect a collision before it finishes
+transmitting a packet, we require the transport time to be \[
+    \text{Transport time} > 2 \cdot \text{ propagation delay}
+\]
+In other words, there  is a minimum length packet for CSMA/CD networks, and that is at least 2 times the propagation
+delay.
+
+Let us consider the goodput. The time is slotted, and all packets are the same length. A time slot is equal to $2 \cdot $ propagation time. In any
+given time slot, a host will decide to transmit (or not) with the probability $p$. So:
+\[
+    \eta = \displaystyle\frac{\text{Time taken to send data}}{\text{Time taken to send data + overhead}}
+\]
+
+Therefore, to find the goodput $\alpha \left(p\right)$, we take the probability that exactly one node transmits in a
+given slot \begin{align*}
+    \alpha \left(p\right) &= \binom{N}{1} p \left(1 - p\right)^{N - 1} \\ 
+    \displaystyle\frac{d\alpha}{dp} &= N \left(1 - p\right)^{N - 1} - p N \left(N - 1\right) \left(1 - p\right)^{N - 2} \\
+    \implies p = \displaystyle\frac{1}{N} &\implies \alpha_{max} \approx 37\%
+\end{align*}
+We will define $A$ to be the expected number of time slots \textbf{wasted} before a packet is successfully transmitted.
+Consider for example a coin $X$, such that \[
+    \p \left[X = H\right] = 0.4 \stackrel{def}{=} a
+\]
+Therefore, the expected number of coin tosses before the first head is $\displaystyle\frac{1}{0.4} = 2.5$, and therefore
+$A = 1.5$ unsuccessful attempts, which would then be followed by one successful one. \\ 
+Let us call the minimum length packet TRANSP. So \begin{align*}
+    \eta_{CSMA/CD} &= \displaystyle\frac{TRANSP}{TRANSP + \E \left[\text{Number wasted slots per packet}\right]} \\ 
+                   &= \displaystyle\frac{TRANSP}{TRANSP + A \left(2 \cdot PROP\right)} \\ 
+                   &= \displaystyle\frac{TRANSP}{TRANSP + \left(3 \cdot PROP\right)}
+\end{align*}
+% subsubsection CSMA/CD (end)
+
 % subsection CSMA (end)
 % section Multiple Access Domains (end)
+
+\section{Single (Logical) Link in practice}\label{sec:single_logical_link} % (fold)
+\subsection{MAC Addresses}\label{sub:mac_addresses} % (fold)
+Devices connected to a LAN have a MAC address, whose function is to get frames from one interface, to another
+physically connected interface on the same network. Most LANs use a 48 bit MAC address, burned into the NIC ROM. Despite
+this, it is sometimes settable in software. Each adaptor on the LAN has a unique MAC address. Their allocations are
+administered by IEEE. Each manufacturer buys a portion of the MAC address space (which ensures uniqueness). Consider a
+MAC address like a personal ID number. This uniqueness ensures that we can move network cards between LANs without
+issue (not necessarily true for every address type, consider IP which are hierarchical, and thus not portable). 
+% subsection MAC Addresses (end)
+
+\subsection{Ethernet}\label{sub:ethernet} % (fold)
+Etherenet is the dominant wired LAN technology. It has nice cheap NICs, and is the first widely used LAN technology.
+Over the years, new versions have been released to keep up with speed improvements. 
+
+Ethernet is a CSMA/CD algorithm: \begin{enumerate}
+    \item NIC receives a datagram from the network layer, and creates a frame 
+    \item If the NIC senses that the channel is idle, it starts frame transmission, and if it senses that it is busy,
+        then it waits until the channel is idle, and then transmits. 
+    \item If the NIC transmits an entire frame without detecting another transmission, then it is done with the frame. 
+    \item If the NIC detects another transmission \textit{while} transmitting, then it aborts, and sends the
+        \textbf{jam} signal
+    \item After aborting, the NIC enters \textbf{exponential backoff}. After the $m$th collision, it chooses $k$ at
+        random from $\left\{0, 1, \dots, 2^m - 1\right\}$, and waits $k \cdot 512$ bit times, before returning to step
+        2
+\end{enumerate} 
+% subsection Ethernet (end)
+% section Single (Logical) Link (end)
 
 
 
