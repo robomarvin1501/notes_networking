@@ -1,0 +1,153 @@
+\documentclass{article}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{mathtools}
+\usepackage{blindtext}
+\usepackage{multicol}
+\usepackage{graphicx}
+\usepackage{placeins}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage[bookmarks=true]{hyperref}
+\usepackage{bookmark}
+\usepackage{bbm}
+\usepackage{wrapfig}
+\usepackage{tabularx}
+\usepackage[autostyle=true]{csquotes}
+\graphicspath{ {./images/} }
+\usepackage[bottom=0.5cm, right=1.5cm, left=1.5cm, top=1.5cm]{geometry}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{exercise}{Exercise}
+\newtheorem{example}{Example}
+\newtheorem{definition}{Definition}[section]
+
+\newcommand{\R}{\ensuremath{\mathbb{R}}}
+\newcommand{\N}{\ensuremath{\mathbb{N}}}
+\newcommand{\Z}{\ensuremath{\mathbb{Z}}}
+\newcommand{\p}{\ensuremath{\mathbb{P}}}
+\newcommand{\E}{\ensuremath{\mathbb{E}}}
+\newcommand{\F}{\ensuremath{\mathcal{F}}}
+\newcommand{\1}{\ensuremath{\mathbbm{1}}}
+\newcommand{\B}{\ensuremath{\mathbbm{B}}}
+
+\title{Lecture 4}
+\author{Gidon Rosalki}
+\date{2025-11-9}
+
+
+\begin{document}
+\maketitle
+
+\section{Multiple Access Domains}\label{sec:multiple_access_domains} % (fold)
+Consider when there is a single shared broadcast channel, with two or more simultaneous
+transmissions by nodes. There is a collision if a node receives two or more signals at the same time. Multiple Access
+Protocols (MAPs) are distributed algorithms that determine how nodes share this channel, or in other words, when a node
+can transmit. The communication about sharing this channel takes place over the channel itself. \\
+
+\subsection{Broadcast domains}\label{sub:broadcast_domains} % (fold)
+\subsubsection{Wired}\label{sec:wired} % (fold)
+It used to be that all nodes would be effectively connected to a single wire, potentially indirectly through a
+\textit{hub}. We do not especially use this today, since this had all nodes in the same collision domain, and massively
+reduced the amount of data able to be transmitted. Today we mainly use a star topology, with an active \textit{switch}
+in the centre. Each node runs a separate connection to the switch, massively increasing available bandwidth.
+% subsubsection Wired (end)
+
+\subsubsection{Wireless}\label{sec:wireless} % (fold)
+Wireless networks suffer from the same problems with collisions, with the additional issues of potentially some nodes
+not receiving the messages, due to signal attenuation over distance, or potential geographic features blocking the
+signal.
+% subsubsection Wireless (end)
+
+\subsection{MAPs}\label{sub:maps} % (fold)
+An idea MAP is as follows: \begin{enumerate}
+    \item When one node wants to transmit, it can send at rate $R$
+    \item When $M$ nodes want to transmit, each can send at an average rate $\displaystyle\frac{R}{M}$
+    \item It is fully decentralised, there is no node that coordinates transmissions 
+    \item There is no clock / slot synchronisation
+    \item It is as simple as possible
+\end{enumerate}
+
+There are also \textbf{Random Access Protocols}, where when a node has a packet to send, it transmits at full channel
+data rate $R$, with no a priori coordination between the nodes. Two or more transmitting nodes result in collisions.
+Therefore, the RAC specifies how to detect collisions, and how to recover from them. Some examples include slotted
+ALOHA, and ALOHA. 
+% subsection MAPs (end)
+
+\subsubsection{Goodput and throughput}\label{sec:goodput_and_throughput} % (fold)
+\begin{definition}[Goodput]
+    The proportion of successful slots (as in, in how many there was a transmission, without a collision)
+\end{definition}
+
+\begin{definition}[Throughput]
+    The proportion of slots in which there was a transmission (not necessarily successful)
+\end{definition}
+% subsubsection Goodput and throughput (end)
+
+\subsubsection{Slotted ALOHA}\label{sec:slotted_aloha} % (fold)
+We assume that all frames are the same size, and that time is transmitted into equal size slots (each slot is the time
+to transmit one frame). Nodes start to transmit only at the beginning of the slot, and they are synchronised. If 2 or
+more nodes transmit in a slot, all nodes detect the collision. \\ 
+They operate as follows: When a node needs to transmit a frame, it transmits it in the next slot. If there is no
+collision, great! If there is a collision, then the node retransmits the frame in the next slot with a probability $p$,
+repeated until it succeeds.
+
+This comes with the benefits that a single active node can continuously transmit at the full rate of the channel. It is
+also highly decentralised, since only the slot times need to be in sync across the nodes. It's also beautifully simple.
+\\ 
+However, there are inevitably collisions, which result in wasted slots. Additionally, there are often many idle slots,
+and nodes may be able to detect a collision in less than a slot time. Finally, how are we meant to synchronise the
+clocks?
+
+Suppose that there are $N$ nodes, each with many frames to send, each transmitting in a given slot with probability $p$.
+The probability that a given node succeeds in a given slot is \[
+    p \left(1 - p\right)^{N - 1}
+\]
+and the probability that \textit{some} node succeeds is approximately \[
+    Np \left(1 - p\right)^{N - 1}
+\]
+To find the maximum efficiency, we want to find the $p^*$ that maximises $Np \left(1 - p\right)^{N - 1}$. For many
+nodes, taking the limit of $Np \left(1 - p\right)^{N - 1}$ as $N \to \infty$ gives a maximum efficiency of
+$\displaystyle\frac{1}{e} \approx 0.37$, or the channel only sends useful transmissions 37\% of the time, which is
+\textit{not great}.
+% subsubsection Slotted ALOHA (end)
+
+\subsubsection{Pure ALOHA}\label{sec:pure_aloha} % (fold)
+Pure, or unslotted ALOHA, is simpler, with no synchronisation. Each host behaves as it if it running slotted ALOHA, but
+the slots are local to itself, rather than shared over the network. It sends a frame with a probability of $p$, at the
+beginning of a slot. This increase the probability of a collision, each frame that is sent at time $t_0$ will collide
+with frames sent in slots that start anywhere from $\left(t_0 - 1, t_0 + 1\right)$.
+
+The goodput is given \begin{align*}
+    \p \left[\text{success by given node}\right] &= \p \left[\text{node transmits}\right] \cdot \p \left[\text{no other
+    node transmits in interacting times}\right] \\ 
+                                                 &= \p \left[\text{node transmits}\right] \\ 
+                                                 &\cdot \p \left[\text{no other node transmits in } \left(t_0 - 1,
+                                                 t_0\right)\right] \\
+                                                 &\cdot \p \left[\text{no other node transmits in } \left(t_0, t_0 +
+                                                 1\right)\right] \\
+                                                 &= p \cdot \left(1 - p\right)^{N - 1} \cdot \left(1 - p\right)^{N - 1} \\ 
+                                                 &= p \cdot \left(1 - p\right)^{2 \left(N - 1\right)}
+\end{align*}
+Choosing the optimal $p$, and $n \to \infty$ results in even \textbf{worse} than slotted ALOHA, with a result of
+$\displaystyle\frac{1}{2e} \approx 0.18$.
+% subsubsection Pure ALOHA (end)
+% subsection Broadcast domains (end)
+
+\subsection{CSMA}\label{sub:csma} % (fold)
+Carrier Sense Multiple Access type protocols \textit{listen} before they transmit. If a channel is sensed as idle,
+transmit the entire frame, and if it is busy, defer the transmission. This is like hearing someone else is talking, and
+waiting for them to finish before you speak. \\ 
+Collisions can still occur, the propagation delay means that two nodes may not hear each others transmission. If there
+is a collision, then the entire packet transmission time is wasted. It should be noted that distance and propagation
+delay both play a significant role in determining collision probability.
+% subsection CSMA (end)
+% section Multiple Access Domains (end)
+
+
+
+
+\end{document}
