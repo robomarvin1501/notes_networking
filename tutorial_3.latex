@@ -1,0 +1,268 @@
+\documentclass{article}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{mathtools}
+\usepackage{blindtext}
+\usepackage{multicol}
+\usepackage{graphicx}
+\usepackage{placeins}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage[bookmarks=true]{hyperref}
+\usepackage{bookmark}
+\usepackage{bbm}
+\usepackage{wrapfig}
+\usepackage{tabularx}
+\usepackage[autostyle=true]{csquotes}
+\graphicspath{ {./images/} }
+\usepackage[bottom=0.5cm, right=1.5cm, left=1.5cm, top=1.5cm]{geometry}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{exercise}{Exercise}
+\newtheorem{example}{Example}
+\newtheorem{definition}{Definition}[section]
+
+\newcommand{\R}{\ensuremath{\mathbb{R}}}
+\newcommand{\N}{\ensuremath{\mathbb{N}}}
+\newcommand{\Z}{\ensuremath{\mathbb{Z}}}
+\newcommand{\p}{\ensuremath{\mathbb{P}}}
+\newcommand{\E}{\ensuremath{\mathbb{E}}}
+\newcommand{\F}{\ensuremath{\mathcal{F}}}
+\newcommand{\1}{\ensuremath{\mathbbm{1}}}
+\newcommand{\B}{\ensuremath{\mathbbm{B}}}
+
+\title{Tutorial 3 - ALOHA continued}
+\author{Gidon Rosalki}
+\date{2025-11-13}
+
+
+\begin{document}
+\maketitle
+
+\section{Reminder}%
+\label{sec:Reminder}
+A RAP is an algorithm that is distributed across the network, and each node uses the same protocol. This is contrasted
+to protocols where there is a single central node that controls the communication. This is very widely used in
+networking protocols, since it makes adding and removing nodes quickly rather easy. This occurs at layer 2 - the data
+link layer. This all occurs over the shared communication channel, so a single collision domain. Should there be a
+collision, then all data is lost. This protocol also states that when a node broadcasts, it uses the \textit{full} link
+bandwidth. 
+
+\begin{definition}[Bandwidth]
+    The maximum rate of data transfer on the communication channel $\displaystyle\frac{\text{bit}}{\text{sec}}$
+\end{definition}
+Note, bandwidth $\ne$ propagation speed, and sometimes it refers to the width of a frequency range 
+
+\begin{definition}[Goodput]
+    The fraction of the bandwidth used to send traffic \textbf{successfully}: $\eta \in \left[0, 1\right]$
+\end{definition}
+
+\subsection{ALOHA}\label{sub:aloha} % (fold)
+In general, we have $N \to \infty$ nodes in the network, a link bandwidth of $B$, sending $L$ bits in a frame, with time
+divided into slots of length $T = \displaystyle\frac{L}{B}$. $T$ is the time required for a message to be transmitted,
+and as we said before, successful transmissions use the entire bandwidth, and the entire time slot.
+
+Note that a node can start transmitting \textit{only} at the beginning of a slot. In pure ALOHA, every node is running
+its own time slots, they are \textbf{not} shared across the network. When a node \textit{finishes} transmitting a
+message, it can detect collisions. We will discard propagation time (also known as physical delay), along with the noise
+on a channel.
+
+Slotted ALOHA assumes that all node slots are synchronised, where pure ALOHA assumes that the nodes all have their own
+clocks, that are not necessarily synchronised.
+
+Until now we have been considering the random variable $X_p $ to be the number of transmission messages in a time
+segment $T$, under the binomial assumption: \[
+    X_p \sim Bin \left(n, p\right)
+\]
+Today we will extend to the Poisson assumption: \[
+    X_p \sim Poi \left(gT\right)
+\]
+We examined slotted and pure ALOHA under the binomial assumption last tutorial, and will be examining them both under
+the Poisson assumption.
+% subsection ALOHA (end)
+
+\section{ALOHA - Poisson Approach}\label{sec:aloha_poisson_approach} % (fold)
+A Poisson process $\left\{N_t | t \geq 0\right\}$ with a rate of $g$ is a counting process where \begin{itemize}
+    \item The number of events in any two disjoint intervals is independent 
+    \item The number of events in any interval of length $T$ is a Poisson random variable with parameter $gT$. This
+        depends o the interval's \textit{length} and not its \textit{timing}
+    \item The sum of independent Poisson random variables is itself a Poisson random variable: \[
+            X \sim Poi \left(\lambda_1\right),\ Y \sim Poi \left(\lambda_2\right) \implies X + Y \sim Poi
+            \left(\lambda_1 + \lambda_2\right)
+        \]
+\end{itemize}
+
+\begin{table}[H]
+     \centering
+     \begin{tabular}{|c|c|c|}
+         \hline
+         Notation & Explanation & Units \\ \hline
+         $g$ & Rate of total messages )(both new and failed) that are up for transmission & $\frac{1}{sec}$ \\ \hline
+         $G = gT$ & Average number of transmitted (successful and failed) messages in time interval $T$ & None  \\ \hline
+         $P_{suc}$ & Probability of a (single) successful transmission (ie, no collision occurred) & None \\ \hline
+     \end{tabular}
+     \caption{Definitions}
+\end{table} 
+If a message arrives in the middle of a slot, it will be sent at the beginning of the next slot.
+
+\subsection{Slotted ALOHA (Poisson) - Analysis}\label{sub:slotted_aloha_poisson_analysis} % (fold)
+What is the probability for a successful frame? Recall that \[
+    X_p \sim Poi \left(gT\right)
+\]
+So, we have \begin{align*}
+    P_{t = T} \left(X = i\right) &= \displaystyle\frac{\left(gT\right)^i}{i!}e^{-gT} \\
+    P_{suc} &= P_{t = T} \left(k = 1\right) \\ 
+            &= gT \cdot e^{-gT} \\ 
+            &= G \cdot e^{-G}
+\end{align*} 
+As for the goodput, as in the binomial model, $P_{suc}$ is also the goodput.
+
+The previous calculation is the perspective of the slot. Let us consider the perspective of the packet: What is the
+probability if a message has already been sent: \[
+    P_0 = P_{t = T} \left(k = 0\right) = e^{-gT} = e^{-G}
+\]
+Here, to calculate the goodput, we should consider the average number of packets transmitted in an interval $T$, which
+is by definition $G$: \[
+    \eta = G \cdot P_0 = G \cdot e^{-G}
+\]
+We should actually calculate the conditional probability of no transmissions in period $t = T$, given that there is a
+transmission. However, under the assumption that $N \to \infty$, the difference between $N$, and $N − 1$ is negligible.
+
+So, what is the maximum goodput? \begin{align*}
+    \displaystyle\frac{d}{dG} \left(Ge^{-G}\right) &= e^{-G} - Ge^{-G} \\ 
+                                                   &= e^{-G} \left(1 - G\right) \\ 
+    \implies \displaystyle\frac{d}{dG} \left(\eta\right) &= 0 \\ 
+    \implies G^* &= 1 \\ 
+    \eta_{G = 1} &= e^{-1} \\ 
+                 &\approx 0.37
+\end{align*}
+% subsection Slotted ALOHA (Poisson) - Analysis (end)
+
+\subsection{Pure ALOHA (Poisson) - Analysis}\label{sub:pure_aloha_poisson_analysis} % (fold)
+What is the probability for a successful packet? \\ 
+Recall that given $X_p \sim Poi \left(gT\right)$, it holds that \begin{align*}
+    P_{t = T} \left(X = i\right) &= \displaystyle\frac{\left(gT\right)^i}{i!}e^{-gT} \\ 
+    P_{suc} &= P_{k = 0} \left(t = T\right) \cdot P_{k = 1} \left(t = T\right) \\ 
+            &= e^{-gT} \cdot gT e^{-gT} \\ 
+            &= gT \cdot e^{-2gT} \\
+    \eta &= P_{suc} \\ 
+         &= gT e^{-2gT} \\ 
+         &= Ge^{-2G}
+\end{align*} 
+
+From the packets perspective, what is the probability of successful packet? We will assume that a packet was sent, and
+calculate the probability that no other packet was sent in those 2 frames. \begin{align*}
+    P_{suc} &= P_{k = 0} \left(t = T\right) \cdot P_{k = 0} \left(t = T\right) \\ 
+            &= e^{-gT} e^{-gT} \\ 
+            &= e^{-2gT}
+\end{align*}
+
+So, the goodput is $Ge^{-2G}$, and maximising for $G$ we get \begin{align*}
+    \displaystyle\frac{d}{dG} Ge^{-2G} &= \displaystyle\frac{d}{dG}\left(G\right) \cdot e^{-2G} + G \cdot
+    \displaystyle\frac{d}{dG}e^{-2G}   \\
+                                       &= e^{-2G} - 2e^{-2G} G \\ 
+                                       &= e^{-2G} \left(1 - 2G\right) \\ 
+    e^{-2G} \left(1 - 2G\right) &= 0 \\ 
+                                &\implies \begin{cases}
+                                    e^{-2G} = 0, &\text{ never }\\
+                                    1 - 2G = 0, &\text{ if }G = \displaystyle\frac{1}{2}\\
+                                    
+                                \end{cases}
+\end{align*}
+
+The maximum goodput is \begin{align*}
+    \eta_{max} = \displaystyle\frac{1}{2}e^{-\displaystyle\frac{2}{2}} = \displaystyle\frac{1}{2e}
+\end{align*}
+% subsection Pure ALOHA (Poisson) - Analysis (end)
+
+% section ALOHA - Poisson Approach (end)
+
+
+\section{Questions}\label{sec:questions} % (fold)
+\subsection{Question 1}\label{sub:question_} % (fold)
+Messages arrive as a Poisson process with rate $g$. There are two types of messages in the network: \begin{enumerate}
+    \item Messages of length $s$ bits, with probability $p$
+    \item Message of length $l$ bits, with probability $1 - p$
+\end{enumerate}
+It is given that $l > s$. Every node can send only at the beginning of a slot (for both message types). The link rate is
+$1 bit/sec$, and a slot is of length $l$ seconds ($T = l$). There are an infinite number of nodes. 
+
+What is the probability of a message being sent successfully? Recall that for $X_p \sim Poi \left(gT\right)$, it holds
+that \begin{align*}
+    P_{t = T} \left(X = i\right) &= \displaystyle\frac{\left(gT\right)^i}{i!}e^{-gT}
+\end{align*}
+A successful $l$ message will be with the probability \[
+    P_{suc,l} = \left(1 - p \right) \cdot P_{t = l} \left(k = 1\right) = \left(1 - p\right)gle^{gl}
+\]
+and a successful $s$ message will be the probability \[
+    P_{suc, s} p \cdot P_{t=l} \left(k = 1\right) = pgle^{-gl}
+\]
+
+What is the goodput of the network? \begin{align*}
+    \text{Define RV: } T_{suc} &= \begin{cases}
+        l, &\text{ if successful $l$ packet}\\
+        s, &\text{ if successful $s$ packet}\\
+        0, &\text{ else}\\
+    \end{cases} \\ 
+        \E \left[T_{suc}\right] &= l \cdot P_{suc, l} + s \cdot P_{suc, s} \\ 
+        \eta &= \displaystyle\frac{\E \left[T_{suc}\right]}{l} \\ 
+             &= \displaystyle\frac{l}{l} \cdot P_{suc, l} + \displaystyle\frac{s}{l} \cdot P_{suc, l} \\ 
+             &= gle^{-gL} \left(\displaystyle\frac{s}{l}p + \displaystyle\frac{l}{l} \left(1 - p\right)\right) \\ 
+             &= gle^{-gL} \left(\displaystyle\frac{s}{l}p + 1 - p\right) \\ 
+\end{align*}
+% subsection Question 1 (end)
+
+\subsection{Question 2}\label{sub:question_} % (fold)
+We now decide to use Pure instead of Slotted ALOHA, and we ask the same questions: Probability of a successful message,
+and goodput of the network. 
+
+Recall that $l > s$, and the slot length is $l$ seconds. Other $l$ have an unsafe start time of $\left(-l,
+l\right)$, where $s$ frames have an unsafe start time of $\left(-s, l\right)$. The arrival rate of an $s$ bit message is
+\[
+    g_s = p \cdot g
+\]
+and the arrival rate of an $l$ bit message is \[
+    g_l = \left(1 - p\right)g
+\]
+
+\begin{figure}[H]
+    \center
+    \includegraphics[scale=0.2]{tutorial_3_suc_l}
+    \caption{Occurrences}
+\end{figure}
+What is the probability that we successfully send an $l$ message $P_{suc, l}$? The probability that no $l$ message is
+sent between $-l, -s$ is \[
+    e^{-g_l \left(l - s\right)} = e^{- \left(1 - p\right) \left(l - s\right)}
+\]
+The probability that no $l$, nor $s$ message is sent between $\left(-s, 0\right)$ is \[
+    P_{t = s} \left(k = 0\right) = e^{- \left(g_l + g_s\right)s} = e^{-gs}
+\]
+The probability that exactly one $l$ message is sent at 0 is \[
+    \left(1 - p\right) \cdot P_{t = l} \left(k = 1\right) = \left(1 - p\right)e^{-gl}
+\]
+When we multiply these three independent factors, we get that \[
+    P_{suc, l} = \left(1 - p\right) e^{-g \left(2l - p \left(l - s\right)\right)}
+\]
+
+What is the probability that we successfully send an $s$ message $P_{suc, s}$? The probability that no $l$ message is
+sent between $-l, -s$ is \[
+    e^{-g_l \left(l - s\right)} = e^{- \left(1 - p\right) \left(l - s\right)}
+\]
+The probability that no $l$, nor $s$ message is sent between $\left(-l, 0\right)$ is \[
+    P_{t} \left(k = 0\right) = e^{- \left(g_l + g_s\right)s} = e^{-gs}
+\]
+The probability that exactly one $s$ message is sent at 0 is \[
+    p \cdot P_{t = s} \left(k = 1\right) = \left(1 - p\right)e^{-gs}
+\]
+When we multiply these three independent factors, we get that \[
+    P_{suc, s} = p e^{-g \left(l + s - p \left(l - s\right)\right)}
+\]
+
+% TODO goodput 27 needs correction in the PDF
+% subsection Question 2 (end)
+% section Questions (end)
+
+\end{document}
