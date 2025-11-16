@@ -203,7 +203,7 @@ issue (not necessarily true for every address type, consider IP which are hierar
 % subsection MAC Addresses (end)
 
 \subsection{Ethernet}\label{sub:ethernet} % (fold)
-Etherenet is the dominant wired LAN technology. It has nice cheap NICs, and is the first widely used LAN technology.
+Ethernet is the dominant wired LAN technology. It has nice cheap NICs, and is the first widely used LAN technology.
 Over the years, new versions have been released to keep up with speed improvements. 
 
 Ethernet is a CSMA/CD algorithm: \begin{enumerate}
