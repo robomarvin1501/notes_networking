@@ -137,6 +137,65 @@ Remember, since switches are invisible in the network, even $S_4$ (the topmost) 
 originally from $A$, will make note of it being on that interface, even though the message actually came from $S_1$.
 
 % subsection Switch - definition (end)
+
+\subsection{Loops}\label{sub:loops} % (fold)
+What if we have a loop? This will cause mistakes in learning, surely. Consider if we have $A$, connected to two separate
+switches, both of which are connected to $B$. These switches are also connected together. When $A$ sends the message,
+both switches learn that $A$ is located on their first interface. However, when switch 2 receives the message from
+switch 1, it also updates its table stating that $A$ is located on 2. The reverse happens as well, resulting in the
+first switch updating its table to say that $A$ is connected to 2. This results in an unstable switch table, and we
+waste network space. 
+
+In order to avoid this, we want our network topology to be stored in a tree. Now, this could be done with a very careful
+network admin, who ensures that he never connects a cable that creates a cycle. This is a lovely idea, but firstly we
+have the problem that people are stupid, and make mistakes. Secondly, this means that our network has no
+\textit{redundancy}. If a port fails, then that entire section of the tree will be lost to the network. Instead, we will
+have our protocol state that the switches will organise themselves in a spanning tree by \textbf{disabling a subset of
+the interfaces}.
+
+The protocol that does this is called the Spanning Tree Protocol (STP). Switches communicate with special configuration
+messages (BPDUs, Bridge Protocol Data Units). It is standardised by IEEE 802.1D. 
+% subsection Loops (end)
+
+\subsection{STP}\label{sub:stp} % (fold)
+We need to solve the following, in order: \begin{enumerate}
+    \item How to find a root switch?
+    \item How to compute a spanning tree of the switches? 
+    \item How to compute a spanning tree of broadcast domains?
+\end{enumerate}
+This protocol is part of a family of protocols, called self stabilising protocols. The objective of these is to
+stabilise the network to some form, which will not have it constantly changing. In our context, we want every switch to
+use the same tree. 
+
+\subsubsection{Choosing a root switch}\label{sec:choosing_a_root_switch} % (fold)
+Assume each switch has a root identifier. Each switch remembers the lowest ID that it has seen so far, and periodically
+floods its root ID to all its neighbours. When it receives a flooded ID from its neighbours, it updates its root ID if
+necessary.
+% subsubsection Choosing a root switch (end)
+
+\subsubsection{Compute a ST given a root}\label{sec:compute_a_st_given_a_root} % (fold)
+The idea is that each node finds its shortest path to the root. At each node, output the parent pointer, and distance.
+This is done through the distributed Bellman Ford algorithm: \\ 
+Assume that there is a unique root node $s$. Each node will, periodically, tell all of its neighbours what is its
+\textit{distance} from $s$. They can tell since at $s$, $dist \left(s\right) = 0$. At node $v$: \[
+    dist_v = \displaystyle\min_{u : \left(v, u\right) \in E} \left\{dist_u + 1\right\} 
+\]
+Mark the neighbour with the lowest distance as the parent.
+
+Bellman Ford has some important properties: \begin{itemize}
+    \item It works for any assignment of \textbf{non negative} link weights $w \left(u, v\right)$
+    \item It works when the system operates asynchronously 
+    \item It works regardless of the initial distances
+\end{itemize}
+
+To compute the spanning tree of LAN segments, we assume that we are given a spanning tree of the switches. The idea is
+that each broadcast domain has at least one switch attached, but only \textit{one} of them should forward packets. We
+choose the switch closest to the root, and break ties by switch ID. If then they are still tied, by the interface / port
+ID. Switches all listen to all distances announcements on each port. They mark the port as \enquote{designated port}
+\textbf{if and only if} the switch in question is the best on that port's associated broadcast domain.
+% subsubsection Compute a ST given a root (end)
+
+% subsection STP (end)
 % section Interconnecting broadcast domains (end)
 
 
