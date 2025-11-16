@@ -1,0 +1,143 @@
+\documentclass{article}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{mathtools}
+\usepackage{blindtext}
+\usepackage{multicol}
+\usepackage{graphicx}
+\usepackage{placeins}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage[bookmarks=true]{hyperref}
+\usepackage{bookmark}
+\usepackage{bbm}
+\usepackage{wrapfig}
+\usepackage{tabularx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage[autostyle=true]{csquotes}
+\graphicspath{ {./images/} }
+\usepackage[bottom=0.5cm, right=1.5cm, left=1.5cm, top=1.5cm]{geometry}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{exercise}{Exercise}
+\newtheorem{example}{Example}
+\newtheorem{definition}{Definition}[section]
+
+\newcommand{\R}{\ensuremath{\mathbb{R}}}
+\newcommand{\N}{\ensuremath{\mathbb{N}}}
+\newcommand{\Z}{\ensuremath{\mathbb{Z}}}
+\newcommand{\p}{\ensuremath{\mathbb{P}}}
+\newcommand{\E}{\ensuremath{\mathbb{E}}}
+\newcommand{\F}{\ensuremath{\mathcal{F}}}
+\newcommand{\1}{\ensuremath{\mathbbm{1}}}
+\newcommand{\B}{\ensuremath{\mathbbm{B}}}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{frame=tb,
+  language=C,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=none,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=3
+}
+
+\title{Lecture 5}
+\author{Gidon Rosalki}
+\date{2025-11-16}
+
+
+\begin{document}
+\maketitle
+\section{IEEE 802.11}\label{sec:ieee_} % (fold)
+In CSMA/CD, we rant he idea that we listen first, then transmit, and detect collisions. This does not work so well in
+WiFi, since it is difficult to detect collisions when transmitting, due to weak receiving signals. We cannot sense all
+collisions in any case, there may be terminals who transmit too weak for a particular node to notice. Our new goal is
+to \textit{avoid} collisions (CSMA/C(ollision) A(voidance)). \\
+
+The sender senses if a channel is idle for time period DIFS, and then transmits an entire frame with no collisiion
+detection (CD). If it senses that the channel is busy, then it starts a random backoff time, which only runs while the
+channel is idle (ie, when the channel is not idle, the timer pauses), and then transmits when the timer expires. If it
+does not receive an ACK (acknowledgement), then it increase the random backoff interval, and repeats. \\
+The receiver returns ACK after gap SIFS, if the frame was received successfully. 
+
+The idea behind avoiding collisions is we allow the sender to \enquote{reserve} the channel, rather than random access
+of the data frames. This way, we avoid collisions of long data frames. The sender first transmits a small request to
+send (RTS) packet to AP/BS, using CSMA. These can still collide with each other, but are less likely so to do, due to the fact that
+they are short. AP/BS broadcasts the clear to send (CTS) response to RTS. CTS is heard by all nodes, and the sender
+transmits a frame, while the other stations defer transmissions. 
+
+\begin{figure}[H]
+    \center
+    \includegraphics[scale=0.2]{lecture_5_80211_collision_avoidance}
+    \caption{RTS-CTS exchange}
+\end{figure}
+
+In summary for MAC protocols, we have two broad classes: \begin{enumerate}
+    \item Centralised coordination, which uses channel partitioning (eg time / frequency modulation)
+    \item Random Access: ALOHA, S-ALOHA, CSMA, CSMA/CD. Carrier sensing is easy for some (wired), and hard for others
+        (wireless). We use CSMA/CD in ethernet, and CSMA/CA in 802.11
+\end{enumerate}
+% section IEEE 802.11 (end)
+
+\section{Interconnecting broadcast domains}\label{sec:interconnecting_broadcast_domains} % (fold)
+\subsection{Switch - definition}\label{sub:switch_definition} % (fold)
+A switch is a link-layer device that \enquote{breaks} apart broadcast domains. It stores, and forwards Ethernet frames,
+and examines the incoming frame's MAC address, selectively forwarding the frame to one or more outgoing links. It uses
+CSMA/CD to access segments. It is important that these switches are \textit{transparent} to the hosts, the hosts should
+be unaware of the presence of switches. Furthermore, switches need not be configured, they teach themselves about the
+state of the network.
+
+Since the switch breaks apart broadcast domains, it allows \textit{multiple} simultaneous transmissions. Since each host
+has a dedicated, and direct connection to the switch, and switches can store buffers, the Ethernet protocol is used on
+each incoming link, with no collision issues, since each link is its own collision domain. The switch then connects
+messages between each node \textbf{simultaneously}, without collisions. This may be contrasted with a hub, where every
+node was on the same broadcast domain.
+
+Now we are left with a question, how does the switch know which interface is connected to which node? The switch
+maintains a \textit{switching table}, which stores this data, along with a timestamp, which allows it to delete old
+entries. Since we do not configure this table ourselves, it must learn it by itself. Every time the switch receives a
+frame, it records in the switching table the MAC, the interface upon which it arrived, and assigns a TTL (Time to Live)
+for this entry. This way, it builds the switching table, and can then begin to use it to forward on packets. It uses a
+fairly simple algorithm: 
+\begin{lstlisting}
+if (entry found for destination) {
+    if (destination is interface from which frame arrived) {
+        drop the frame
+    } else {
+        forward the frame on to the indicated interface
+    }
+} else {
+    flood (forward on all interfaces, aside from the one from which the frame arrived)
+}
+\end{lstlisting}
+
+Switches can thus be connected, and chained, together. 
+\begin{figure}[H]
+    \center
+    \includegraphics[scale=0.2]{lecture_5_connected_switches}
+    \caption{Chained switches}
+\end{figure}
+Remember, since switches are invisible in the network, even $S_4$ (the topmost) when receiving a message that came
+originally from $A$, will make note of it being on that interface, even though the message actually came from $S_1$.
+
+% subsection Switch - definition (end)
+% section Interconnecting broadcast domains (end)
+
+
+\end{document}
