@@ -169,7 +169,6 @@ So, the goodput is $Ge^{-2G}$, and maximising for $G$ we get \begin{align*}
                                 &\implies \begin{cases}
                                     e^{-2G} = 0, &\text{ never }\\
                                     1 - 2G = 0, &\text{ if }G = \displaystyle\frac{1}{2}\\
-                                    
                                 \end{cases}
 \end{align*}
 
@@ -261,8 +260,110 @@ When we multiply these three independent factors, we get that \[
     P_{suc, s} = p e^{-g \left(l + s - p \left(l - s\right)\right)}
 \]
 
-% TODO goodput 27 needs correction in the PDF
+What about the goodput? Let us define RV: \begin{align*}
+    T_{suc} &= \begin{cases}
+        L, &\text{ if successful $L$ packet}\\
+        S, &\text{ if successful $S$ packet}\\
+        0, &\text{ else}
+    \end{cases} \\ 
+        \E \left[T_{suc}\right] &= L \cdot P_{suc, L} + S \cdot P_{suc, S} \\ 
+        \eta &= \displaystyle\frac{L \cdot P_{suc, L}}{L} + \displaystyle\frac{S \cdot P_{suc, S}}{L} \\ 
+             &= P_{suc, L} + \displaystyle\frac{S}{L} P_{suc, S} \\ 
+             &= \left(1 - p\right)e^{-g \left(2L - p \left(L - S\right)\right)} + \displaystyle\frac{S}{L}pe^{-g \left(L
+             + S - p \left(L - S\right)\right)}
+\end{align*}
 % subsection Question 2 (end)
+
+\subsection{Question 3}\label{sub:question_} % (fold)
+There are $N$ nodes in the network, divided into 2 groups: \begin{enumerate}
+    \item $X$ - contains $p \cdot N$ nodes that send messages of size $S$, using $\displaystyle\frac{1}{4}$ of the
+        bandwidth 
+    \item $Y$ - contains $\left(1 - p\right)N$ nodes that send messages of size $S \cdot \alpha$ such that $\alpha > 1$,
+        using $\displaystyle\frac{3}{4}$ of the bandwidth
+\end{enumerate}
+There is no overlap between the frequencies of $X$ and $Y$. We will begin by discussing slotted ALOHA, every node can
+send only at the beginning of a slot, and $T = S$. 
+
+The arrival rate of $S_\alpha$ messages is \[
+    \left(1 - p\right) \cdot g \implies S_{p}^\alpha \sim Poi \left(\left(1 - p\right)g\right)
+\]
+and the arrival rate of $S$ messages is \[
+    p \cdot g \implies S_p \sim Poi \left(pg\right)
+\]
+What is the probability of a successful message? We will split into a successful $S_\alpha$, and $S$. Recall that
+$S_\alpha$ messages are longer than a slot. 
+\begin{figure}[H]
+    \center
+    \includegraphics[scale=0.2]{tutorial_3_psuc_alpha}
+    \caption{}
+\end{figure}
+
+\begin{align*}
+    P_{suc, S_\alpha} &= P_{k = 0}^{S_\alpha} \left(t = S \left(\left\lceil \alpha \right\rceil - 1\right)\right) \cdot P_{k = 1}^{S_\alpha}
+    \left(t = S\right) \cdot P_{k = 0}^{S_\alpha} \left(t = S \left(\left\lceil \alpha \right\rceil - 1\right)\right) \\
+                      &= e^{-g \left(1 - p\right) S \left(\left\lceil \alpha \right\rceil - 1\right)} \cdot g \left(1 0
+                    - p\right) S e^{-g \left(1 - p\right)S} \cdot e^{-g \left(1 - p\right)S \left(\left\lceil \alpha
+                    \right\rceil - 1\right)} \\ 
+                      &= g \left(1 - p\right) Se^{-g \left(1 - p\right) S \left(2 \left\lceil \alpha \right\rceil - 1\right)}
+\end{align*}
+and \begin{align*}
+    P_{suc, S} &= P_{k = 1}^S \left(t = S\right) \\ 
+               &= gpSe^{-gpS}
+\end{align*}
+
+What about the goodput? We are looking at some time window (of length $S \left\lceil \alpha \right\rceil $). During this
+window, there are some cases: \begin{itemize}
+    \item A successful packet that starts at $t$, and contributes $S\alpha$
+    \item A successful packet that starts at $t - 1$, and contributes $S \left(\alpha - 1\right)$
+    \item $\vdots$
+    \item A successful packet that starts at $t + S$, and contributes $S \left(\left\lceil \alpha \right\rceil  - 1\right)$
+\end{itemize}
+
+So we can construct a very large random variable \begin{gather*}
+    T_{suc, S\alpha} = \begin{cases}
+        S \alpha, &\text{ if successful packet that starts at } t\\
+        S \left(\alpha - 1\right), &\text{ if successful packet that starts at } t - S\\
+        S \left(\alpha - 2\right), &\text{ if successful packet that starts at } t - 2S\\
+        \vdots \\ 
+        S \left(\left\lceil \alpha \right\rceil  - 1\right), &\text{ if successful packet that starts at } t + S\\
+        S \left(\left\lceil \alpha \right\rceil  - 2\right), &\text{ if successful packet that starts at } t + 2S\\
+        \vdots \\ 
+        S \cdot 1, &\text{ if successful packet that starts at } t + S \left(\left\lceil \alpha \right\rceil - 1\right)\\
+        0, &\text{ else}
+    \end{cases}
+\end{gather*}
+
+So \begin{align*}
+    \E \left[T_{suc, S \alpha}\right] &= P_{suc, S \alpha} \left(S \alpha + \displaystyle\sum_{k = 1}^{\left\lceil
+    \alpha \right\rceil  - 1} S \left(\alpha - k\right) + \displaystyle\sum_{k = 1}^{\left\lceil \alpha \right\rceil S
+\left(\left\lceil \alpha \right\rceil - k\right)}\right) \\ 
+                                      &= P_{suc, S \alpha} S \left(\alpha + \displaystyle\sum_{k = 1}^{\left\lceil
+                                      \alpha \right\rceil - 1} \alpha - \displaystyle\sum_{k = 1}^{\left\lceil
+                                      \alpha \right\rceil - 1} k + \displaystyle\sum_{k = 1}^{\left\lceil
+                                      \alpha \right\rceil - 1} k\right) \\ 
+                                      &= P_{suc, S\alpha} S \left(\alpha + \left(\left\lceil \alpha \right\rceil -
+                                      1\right)\alpha\right) \\ 
+                \E \left[T_{suc, S\alpha}\right] &= P_{suc, S\alpha} S\alpha \left\lceil \alpha \right\rceil 
+\end{align*} 
+We will then do the same thing with $S$.
+
+In total, we get \[
+    T_{suc, S\alpha} = \begin{cases}
+        S, &\text{ if successful $S$ packet}\\
+        0, &\text{ else}\\
+    \end{cases} \implies \E \left[T_{suc, S}\right] = S \cdot P_{suc, S}
+\]
+
+So the goodput of the network comes out to be \begin{align*}
+    \eta &= \displaystyle\frac{3}{4} \eta_{S\alpha} + \displaystyle\frac{1}{4}\eta_{S} \\ 
+         &= \displaystyle\frac{3}{4} \displaystyle\frac{\E \left[T_{suc, S\alpha}\right]}{S \left\lceil \alpha
+         \right\rceil } + \displaystyle\frac{1}{4} \displaystyle\frac{\E \left[T_{suc, S}\right]}{S} \\ 
+         &= \displaystyle\frac{3}{4}\displaystyle\frac{S \alpha \left\lceil \alpha \right\rceil \cdot P_{suc,
+         S\alpha}}{S \left\lceil \alpha \right\rceil } + \displaystyle\frac{1}{4} \displaystyle\frac{S \cdot P_{suc,
+         S}}{S} \\ 
+         &= \displaystyle\frac{3}{4} \alpha P_{suc, S\alpha} + \displaystyle\frac{1}{4} P_{suc, S}
+\end{align*}
+% subsection Question 3 (end)
 % section Questions (end)
 
 \end{document}
