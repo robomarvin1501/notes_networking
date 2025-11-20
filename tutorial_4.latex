@@ -16,6 +16,8 @@
 \usepackage{bbm}
 \usepackage{wrapfig}
 \usepackage{tabularx}
+\usepackage{listings}
+\usepackage{xcolor}
 \usepackage[autostyle=true]{csquotes}
 \graphicspath{ {./images/} }
 \usepackage[bottom=0.5cm, right=1.5cm, left=1.5cm, top=1.5cm]{geometry}
@@ -33,6 +35,27 @@
 \newcommand{\F}{\ensuremath{\mathcal{F}}}
 \newcommand{\1}{\ensuremath{\mathbbm{1}}}
 \newcommand{\B}{\ensuremath{\mathbbm{B}}}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{frame=tb,
+  language=Python,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=none,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=3
+}
 
 \title{Tutorial 4 - CSMA/CD}
 \author{Gidon Rosalki}
@@ -70,9 +93,9 @@ Let us define $T_{prop}$ to be the maximum propagation time in the channel, betw
 collide with another within the first $T_{prop}$ seconds of it beginning to transmit. A node should decide what to do if
 the channel is occupied, and we iwll discuss the following 3 approaches: \begin{table}[H]
      \centering
-     \begin{tabular}{|c|c|c|c|}
+     \begin{tabular}{|p{0.2\textwidth}|p{0.2\textwidth}|p{0.2\textwidth}|p{0.2\textwidth}|}
          \hline
-         Approach & Free & Occupied & Intuition \\ \hline
+         Approach & What to do if free & What to do if occupied & Intuition \\ \hline
          1-persistent & Send & Wait until the channel becomes idle, and then send immediately & High chance of
          collisions in loaded channels \\ \hline
          Non-persistent & Send & Backoff and try again & Lower utilisation on low load \\ \hline
@@ -193,7 +216,9 @@ Then the goodput will tend to 1 when either the transmission time tends to infin
 $T_{prop}$, no nodes will transmit, or when the propagation time tends to 0, meaning that the risky $T_{prop}$ time will
 be insignificant. 
 
-
+Whereas in slotted ALOHA, without CSMA/CD, we calculated \[
+    S_{max} = \displaystyle\frac{1}{e}
+\]
 
 % subsubsection Analysis (end)
 % subsection CSMA/CD (end)
@@ -201,10 +226,248 @@ be insignificant.
 % section CSMA / Collision Detection (end)
 
 \section{Questions}\label{sec:questions} % (fold)
+Consider a CSMA/CD network with the following parameters:
+\begin{itemize}
+    \item Link bandwidth: $10Mbps$
+    \item Link propagation speed: $2 \cdot 10^8 m/s$
+\end{itemize}
+We want to add a similar network, distanced $20Km$ from this one, connected by a medium of same properties
+The distance between two nodes within the same network is $<< 20Km$.
 
+\subsection{Question 1}\label{sub:question_} % (fold)
+Can a message of size 64Bytes be used in this type of network? 
+
+The time it takes for a single bit to cross between the two networks is \begin{align*}
+    T_{prop} &= \displaystyle\frac{\text{distance}}{\text{propagation speed}} \\ 
+             &= \displaystyle\frac{20Km}{2 \cdot 10^8 m/s} \\ 
+             &= 10^{-4} s \\
+             &= 100 \mu s
+\end{align*}
+Where the time it takes to transmit 64B is \begin{align*}
+    T_{trans} &= \displaystyle\frac{\text{bits}}{\text{bits per second}} \\ 
+              &= \displaystyle\frac{8 \cdot 64}{10Mb/s} \\ 
+              &= \displaystyle\frac{8 \cdot 64}{10^7} \\ 
+              &= 51.2 \mu s
+\end{align*}
+Since $T_{trans} < 2 T_{prop}$, we cannot use such a message in this network, and implement CSMA/CD. A station could
+finish sending a $64B$ frame before a worst-case collision has time to propagate back and be detected.
+% subsection Question 1 (end)
+
+\subsection{Question 2}\label{sub:question_} % (fold)
+What is the smallest change we need to make to solve the above problem? 
+
+We need to make the packet size large enough so that the time it takes to send is larger than $2 T_{prop} = 200 \mu s$.
+If we use $256B$ messages (4 times larger), this would give us a transmission time of $204.8 \mu s$, which satisfies
+this. 
+% subsection Question 2 (end)
+
+\subsection{Question 3}\label{sub:question_} % (fold)
+What would change if the link bandwidth was $100Mbs$?
+
+Increasing the link bandwidth allows us to transmit at a higher rate, so $T_{trans}$ is a factor of 10 smaller. We need to
+increase the packet size for the $T_{trans} \geq 2T_{prop}$ to hold, so since we have increased the link rate by 10, we
+would need a packet size of at least $2560B$.
+% subsection Question 3 (end)
+
+
+\subsection{Question 4}\label{sub:question_} % (fold)
+\begin{figure}[H]
+    \center
+    \includegraphics[scale=0.2]{tutorial_4_quest_4}
+    \caption{Network architecture}
+\end{figure}
+Let the propagation speed be \begin{gather}
+    v_{prop} = 6 \cdot 10^7 m/s \\ 
+    B = 3 Mb/s
+\end{gather}
+For the CSMA/CD protocol to work properly, what is the minimum message size ($x$) that A can send C?
+
+\begin{align*}
+    T_{prop} &= \displaystyle\frac{\text{distance}}{v_{prop}} \\ 
+             &= \displaystyle\frac{10Km}{6 \cdot 10^7 m/s} \\ 
+             &= \displaystyle\frac{1}{6} \cdot 10^{-3} s \\
+    T_{trans} &= \displaystyle\frac{x}{B} \\ 
+              &\geq 2T_{prop} \\ 
+    \Leftrightarrow \displaystyle\frac{x}{3 \cdot 10^6} &\geq \displaystyle\frac{1}{3} \cdot 10^{-3} \\ 
+    \Leftrightarrow x &\geq 10^3 bit
+\end{align*}
+
+For the CSMA/CD protocol to work properly, what is the minimum message size ($x$) that A can send B? 
+
+We must take into account the worst case scenario, so as above: \[
+    x = 10^3 bit
+\]
+% subsection Question 4 (end)
+
+\subsection{Question 5}\label{sub:question_} % (fold)
+Consider a network that runs \textbf{slotted ALOHA}, with $T_{trans} > 2 T_{prop}$. Each slot is of size $T_{trans}$.
+Will adding \textbf{CSMA} improve the goodput? No, since if nodes sense the channel at the \textit{beginning} of each slot, they
+will always sense that the medium is free, and will then transmit.
+
+Consider a network that runs \textbf{slotted ALOHA}, with $T_{trans} > 2 T_{prop}$. Each slot is of size $T_{trans}$.
+Will adding \textbf{CSMA/CD} improve the goodput? No, since even if a collision is detected, then the entire slot is
+already wasted. 
+
+
+Consider a network that runs \textbf{pure ALOHA}, with $T_{trans} > 2 T_{prop}$. Each slot is of size $T_{trans}$.
+Will adding \textbf{CSMA} improve the goodput? Yes, this is a trivial CSMA improvement. 
+
+Consider a network that runs \textbf{pure ALOHA}, with $T_{trans} > 2 T_{prop}$. Each slot is of size $T_{trans}$.
+Will adding \textbf{CSMA/CD} improve the goodput? Yes, since if collided transmissions will stop earlier, this will free
+the medium for other transmissions.
+% subsection Question 5 (end)
+
+\subsection{Conclusions of CSMA/CD}\label{sub:conclusions_of_csma_cd} % (fold)
+In CSMA/CD, we wait for the channel to become idle before sending, detect collisions and notify everyone of them when
+they happen (the jam signal), and wait a random time period before retrying (backoff). It makes sense to use CSMA/CD
+when the E2EP time is significantly shorter than the transmission time.
+% subsection Conclusions of CSMA/CD (end)
 % section Questions (end)
 
 \section{Errors Detection}\label{sec:errors_detection} % (fold)
+When sending information, there is every chance (cosmic rays, noisy channels, etc.) that same information will not
+arrive in the end, some bits may be changed. We need to find a way to \textbf{detect} this corruption, and
+\textbf{recover} from them if possible. 
+
+Consider for example the Israeli ID number. The final digit is a checksum, computed by the Luhn algorithm: \begin{enumerate}
+    \item Firstly, it alternates multiplying digits by 1 or 2 
+    \item If a digit is multiplied by 2, and the result is greater than 9, then the digits of the doubled number are
+        summed (e.g. $2 \cdot 7 = 14 \to 1 + 4 = 5$)
+    \item All the resulting digits (from the original digits, or their doubles) are then added together 
+    \item The checksum digit is calculated as the difference between 10, and the last digit of the sum (sum modulo 10).
+\end{enumerate}
+This is equivalent to the following Python:
+\pagebreak
+\begin{lstlisting}
+def luhn(tz_without_last_digit: int) -> int:
+    digits = str(tz_without_last_digit)
+    total = 0
+    for index, string_digit in enumerate(digits):
+        # Alternate multiplying by 1 and 2
+        mult = 1 if index % 2 == 0 else 2
+        digit = mult * int(string_digit)
+
+        # Sum digits if result of multiplication is more than 1 digit long
+        if digit > 9:
+            digit = sum([int(sub_digit) for sub_digit in str(digit)])
+
+        total += digit
+
+    # Generate checksum from total
+    last_digit = total % 10
+    checksum = 10 - last_digit
+
+    return checksum
+\end{lstlisting}
+
+So one can very quickly check if an entered value fits this formula, and verify that it is a legitimate ID number.
+
+Similarly, to identify if some error occurred to our packet, since it is just a collection of bits, we can add
+additional, redundant data / bits that would allow us to observe changes in the original data. This would naturally have
+some cost, since more data is now being sent on the network. 
+
+\subsection{Repetition code}\label{sub:repetition_code} % (fold)
+Before we start with clever methods, consider the basic one of just repeating the packet. If one triples the packet,
+this would increase the packet size from $n$ to $3n$, but for each bit, one may consider which bit occurs the most. If
+one suffered some corruption, and a bit was swapped, but the other 2 did not for this bit, it may be seen that two
+thirds agree that it is the other bit, and choose that bit. Essentially, each bit is chosen by majority vote of the
+repetitions. \\ 
+However, this comes with significant overhead: \begin{align*}
+    \displaystyle\frac{\text{Actual - Original}}{\text{Original}} &= \displaystyle\frac{\text{Actual}}{\text{Original}}
+    - 1 \\ 
+                                                                  &= \displaystyle\frac{\text{\# Redundant
+                                                                  bits}}{\text{\# Original bits}}
+\end{align*}
+So repeating 3 times has the overhead of \[
+    \displaystyle\frac{3N}{N} - 1 = 2
+\]
+% subsection Repetition code (end)
+
+\subsection{1D parity}\label{sub:_d_parity} % (fold)
+To reduce the additional of $2n$ bits, there are things to consider. If we were guaranteed that there could be at most
+a single bit being corrupted, then we can identify it through bit arithmetic. We can add a single bit indicating if
+there are an odd, or even number of 1s in the packet. That way, we can identify if there is an error, but not correct
+it. This has the overhead of \[
+    \displaystyle\frac{N + 1}{N} - 1 = \displaystyle\frac{1}{N}
+\]
+The cost of bit parity is a single bit per packet, which is not very much, but it cannot recover from failure.
+Additionally, the assumption that only one bit can change does not hold in practice. 2 bits changing can affect the
+corruption detection, so to overcome this we use 2D parity.
+% subsection 1D parity (end)
+
+\subsection{2D parity}\label{sub:_d_parity} % (fold)
+Here, we convert the data into a rectangular form of a specific length. Parity bits are then added for both the rows,
+and the columns, for example, if there is a length of $j$, and data of size $i \cdot j$ bits, then the actual length of
+the packet is $i \cdot j + i + j + 1$ bits.  
+\[
+    \left[
+        \begin{array}{ccc}
+            d_{1,1} & \dots & d_{1,j} \\
+            d_{2,1} & \dots & d_{2,j} \\
+            \vdots & \dots & \vdots \\
+            d_{i,1} & \dots & d_{i,j}
+        \end{array} \right] \implies \left[
+        \begin{array}{ccc|c}
+            d_{1,1} & \dots & d_{1,j} & d_{1,j+1} \\
+            d_{2,1} & \dots & d_{2,j} & d_{1,j+1} \\
+            \vdots & \dots & \dots & \vdots \\
+            d_{i,1} & \dots & d_{i,j} & d_{i,j+1} \\
+            \hline 
+            d_{i + 1,1} & \dots & d_{i + 1,j} & d_{i + 1,j+1} \\
+        \end{array}
+    \right]
+\]
+
+This way, we may identify errors from both the rows, and the columns, and thus correct them (with limitations). This
+approach can \textbf{detect} 1 bit errors, 2 bit, and 3 bit errors. Some 4 bit errors may be corrected, but others may
+not. For example, when a 4 bit 2x2 block is all swapped, this will not affect the overall sums in the rows and columns,
+and is thus a silent failure. 
+
+We may use this approach to recover lost data, and may recover a maximum of $\displaystyle\frac{\text{dimension}}{2}$
+bits, so in this case: 1. 
+
+What would be the overhead of 2D parity for a 100bit packet with $j, i = 10$?
+\begin{align*}
+    \displaystyle\frac{i \cdot j + i + j + 1}{i \cdot j} - 1 &= \displaystyle\frac{100 + 10 + 10 + 1}{100} - 1 \\ 
+                                                             &= \displaystyle\frac{121}{100} - 1 \\ 
+                                                             &= 0.21
+\end{align*}
+So in summary: \begin{table}[H]
+     \centering
+     \begin{tabular}{|c|c|c|c|}
+         \hline
+         Code & Overhead & Ability to correct & Ability to detect  \\ \hline
+          Repetition (3 times) & 2 & 1 & 2 \\ \hline
+       1D Parity & $\frac{1}{N}$ & 0 & 1 \\ \hline
+         2D parity & $\frac{i + j + 1}{N}$ & 1 & 3 \\ \hline
+     \end{tabular}
+     \caption{Error detection and recovery summary}
+\end{table} 
+% subsection 2D parity (end)
+
+\subsection{Cyclic redundancy checks (CRC)}\label{sub:cyclic_redundancy_checks_crc_} % (fold)
+Cyclic redundancy checks are commonly used, and types are referred to as crc-$r$, for example, Ethernet uses crc-32.
+This adds $r$ bits to the overhead, and only fails to detect at probability $\approx 2^{-r}$. We treat the packet bits
+as a long binary number (or a polynomial over $GF(2)$), and divide it by a fixed generator polynomial. The remainder of
+this division is the CRC value, which will be added to the packet. It is used as follows: \begin{enumerate}
+    \item The sender computes the CRC, and appends it to the frame 
+    \item The receiver divides the received bits (data + CRC) bu the same polynomial 
+    \item If the remainder is 0, we assume no error; otherwise, we detected corruption
+\end{enumerate}
+
+Consider the following example of crc-3: We choose a simple generator, of degree 3: \[
+    G \left(x\right)= x^3 +x + 1 \Leftrightarrow G = 1011
+\]
+We have the data to send $D = 1101$. We append $r = 3$ zero bits (the degree of $G$): \[
+    D \cdot x^3 = 1101 000
+\]
+and divide $1101000$ by $1011$ by using binary (XOR) long division, getting aa remainder $R = 001$. The sender appends
+the CRC: \[
+    \text{coded message} = D \| R = 1101 001
+\]
+The receiver divides $1101001$ by $1011$, and gets a remainder of 000, meaning no error was detected. If there was a bit
+flip, then division by 1011 results in a non-zero remainder, and an error is detected. 
+% subsection Cyclic redundancy checks (CRC) (end)
 
 % section Errors Detection (end)
 
