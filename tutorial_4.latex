@@ -1,0 +1,212 @@
+\documentclass{article}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{mathtools}
+\usepackage{blindtext}
+\usepackage{multicol}
+\usepackage{graphicx}
+\usepackage{placeins}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage[bookmarks=true]{hyperref}
+\usepackage{bookmark}
+\usepackage{bbm}
+\usepackage{wrapfig}
+\usepackage{tabularx}
+\usepackage[autostyle=true]{csquotes}
+\graphicspath{ {./images/} }
+\usepackage[bottom=0.5cm, right=1.5cm, left=1.5cm, top=1.5cm]{geometry}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{exercise}{Exercise}
+\newtheorem{example}{Example}
+\newtheorem{definition}{Definition}[section]
+
+\newcommand{\R}{\ensuremath{\mathbb{R}}}
+\newcommand{\N}{\ensuremath{\mathbb{N}}}
+\newcommand{\Z}{\ensuremath{\mathbb{Z}}}
+\newcommand{\p}{\ensuremath{\mathbb{P}}}
+\newcommand{\E}{\ensuremath{\mathbb{E}}}
+\newcommand{\F}{\ensuremath{\mathcal{F}}}
+\newcommand{\1}{\ensuremath{\mathbbm{1}}}
+\newcommand{\B}{\ensuremath{\mathbbm{B}}}
+
+\title{Tutorial 4 - CSMA/CD}
+\author{Gidon Rosalki}
+\date{2025-11-20}
+
+
+\begin{document}
+\maketitle
+
+\section{CSMA / Collision Detection}\label{sec:csma_collision_detection} % (fold)
+
+\subsection{Introduction}\label{sub:introduction} % (fold)
+We saw 2 variations of the ALOHA protocol, slotted which is (magically) synchronised, which had the better goodput of
+around 0.37, and pure, which is not synchronised, and had a goodput of 0.18. They have poor performance since they do
+not deal well with collisions. They can be improved by having a central manager, but in this course we are focusing on
+distributed protocols.
+
+To improve these protocols, we can add some features, such as a node checking if it can transmit a message or if this
+would case a collision. If a node observes another transmission at the same time, then it can react. Consider a
+conversation, you do not just talk with probability $p$, but rather listen first, and speak if no one else is. We would
+like to add these two features. 
+
+When more than one node is using the same broadcast channel, then collisions are bound to occur, so to avoid these we
+can potentially check if the channel is free, schedule time for each node, or even add more channels (not in this
+course). For now, let us focus on checking the availability of the channel.
+% subsection Introduction (end)
+
+\subsection{Carrier Sense Multiple Access (CSMA)}\label{sub:carrier_sense_multiple_access_csma_} % (fold)
+Let us suppose we simply test if the channel is occupied before we transmit. This is insufficient, since transmissions
+upon it are \textbf{not} instantaneous. There is a propagation time, so node A could transmit, and at the same time node
+B could test, and observe that the channel is unoccupied. Since it is unoccupied (from B's perspective), B begins to
+transmit, causing a collision with A's transmission. 
+
+Let us define $T_{prop}$ to be the maximum propagation time in the channel, between any two nodes. A transmission may
+collide with another within the first $T_{prop}$ seconds of it beginning to transmit. A node should decide what to do if
+the channel is occupied, and we iwll discuss the following 3 approaches: \begin{table}[H]
+     \centering
+     \begin{tabular}{|c|c|c|c|}
+         \hline
+         Approach & Free & Occupied & Intuition \\ \hline
+         1-persistent & Send & Wait until the channel becomes idle, and then send immediately & High chance of
+         collisions in loaded channels \\ \hline
+         Non-persistent & Send & Backoff and try again & Lower utilisation on low load \\ \hline
+         $p$-persistent & Send with probability $p$ & Wait until the channel becomes idle, and then send with
+         probability $p$ & A compromise between the other two approaches \\ \hline
+     \end{tabular}
+     \caption{Approaches}
+\end{table} 
+
+When detecting a collision, we want \textbf{all} the nodes to know about it, but then we have a few problems: \begin{itemize}
+    \item How long does it take to detect a collision?
+    \item How can we notify? Nodes A and B know that there was another transmission when they were transmitting, but
+        node C just saw information on the channel, and does not know that this was not a legitimate transmission
+    \item When should a node try and retransmit?
+\end{itemize}
+
+\subsubsection{How long}\label{sec:how_long} % (fold)
+If the network propagation time is $T_{prop}$, how long does it take to notice a collision?
+\begin{figure}[H]
+    \center
+    \includegraphics[scale=0.2]{tutorial_4_collision_time}
+    \caption{Collision time}
+\end{figure}
+
+Let us assume that the maximum one way propagation time of the network is between nodes A and B, and is $T_{prop}$. Node
+A begins transmitting at time 0, and B begins at $T_{prop} - \varepsilon$. Node A will only see the collision at time
+$2T_{prop} - \varepsilon$, so the amount of time it takes to notice a collision is $2T_{prop}$. \\
+In conclusion, we need the frames of our CSMA/CD network to be long enough such that \[
+    T_{transmission} > 2T_{prop}
+\]
+% subsubsection How long (end)
+
+\subsubsection{Jam signal}\label{sec:subsubsection_name} % (fold)
+Other nodes listening will hear the collided signals, but not know if that was an intended transmission. They are
+notified that a collision occurred by the node that detected said collision sending a jam signal, after which all the
+nodes will be aware of the collision, and will now ignore the previous (corrupted) data.
+
+% subsubsection subsubsection name (end)
+
+\subsubsection{1-persistent}\label{sec:_persistent} % (fold)
+In the case of collisions, we want to wait before trying again. There are a few ways to decide how long to wait, but the
+standard method is called \enquote{exponential backoff}. \\ 
+Exponential backoff depends on a parameter $c$, which we usually set to 2. After the $k$th attempt to transmit a frame,
+we will uniformly select $j$ from $\left\{0, 1, \dots, c^k - 1\right\}$, and wait $j \cdot T$ time. When a node
+transmits a frame successfully, then it resets its number of attempts counter ($k$) to 0. The attempt counters of other
+nodes remain unaffected.
+% subsubsection 1-persistent (end)
+
+\subsubsection{p-persistent}\label{sec:p_persistent} % (fold)
+Here, we have \textbf{no} exponential backoff. In the case of a collision, then the entire frame is wasted. The nodes
+instead simply wait until the channel is idle, and then send with probability $p$.
+% subsubsection p-persistent (end)
+% subsection Carrier Sense Multiple Access (CSMA) (end)
+
+\subsection{CSMA/CD p-persistent}\label{sub:csma_cd} % (fold)
+\subsubsection{Definitions}\label{sec:definitions} % (fold)
+For networking, let: \begin{itemize}
+    \item End to end propagation time (E2EP) - $T_{prop}$
+    \item Number of stations - $N$
+    \item Frame transmission time - $T_{trans}$
+\end{itemize}
+
+For the protocol, let:
+\begin{itemize}
+    \item Time is divided into slots of size $2T_{prop}$ time units 
+    \item Nodes always have data to transmit 
+    \item The probability of a node transmitting is $p$
+\end{itemize}
+
+% subsubsection Definitions (end)
+
+\subsubsection{Analysis}\label{sec:analysis} % (fold)
+So, our $p$-persistent protocol comes down to: \begin{enumerate}
+    \item Sense: If busy, wait another time slot, and if free, send with probability $p$. Once sent, start the detection
+        phase 
+    \item Detecting: If detected a collision, stop transmitting, and try sending again in the next slot (with
+        probability $p$)
+\end{enumerate}
+The jam signal is still sent, and relevant, just not so interesting, and not mention here. 
+
+So the network may be in the following states: \begin{itemize}
+    \item Idle - No node is using the network 
+    \item Transmitting - Some node succeeded in sending data, without a collision 
+    \item Contention - 2 nodes (or more) started sending at a difference of less that $T_{prop}$, and nodes will know of
+        this only after at most $2T_{prop}$ time units have passed
+\end{itemize}
+
+Let us begin from the goodput of $p$-persistent: The probabilithy of a successful transmission is the same as in slotted
+ALOHA: \[
+    P_{suc} \left(p\right) = P \left(X_p = 1\right) = np \left(1 - p\right)^{n - 1}
+\]
+The maximum of this function is at $p = \displaystyle\frac{1}{n}$, and so \[
+    \displaystyle\max_{p \in \left[0, 1\right]} \left\{P_{suc} \left(p\right)\right\}  = \left(1 -
+    \displaystyle\frac{1}{n}\right)^{n - 1} = S
+\]
+
+This is insufficient for calculating the goodput, since we need to account for the lost time of contention, and idle
+slots. Since each slot is of size $2T_{prop}$, the result is different from \enquote{regular} slotted ALOHA. This is
+like asking for the probability of $k$ idle / contended intervals, followed by a successful transmission. This is a
+geometric distribution, with a parameter $S$. If the contended intervals is a geometric random variable, with parameter
+$S$, then its expectation is $\displaystyle\frac{1}{S}$, and so there are $\displaystyle\frac{1}{S} - 1$ wasted slots.
+Each wasted slot costs $2T_{prop}$ time, so the expected wasted time is \[
+    2T_{prop} \left(\displaystyle\frac{1}{S} - 1\right)
+\]
+We can then calculate the goodput as \[
+    \displaystyle\frac{\text{Transmission time}}{\text{Transmission time + Wasted time}} =
+    \displaystyle\frac{T_{trans}}{T_{trans} + 2T_{prop} \left(\frac{1}{S} - 1\right)}
+\]
+So as $n \to \infty$, the maximal goodput is \[
+    \displaystyle\frac{T_{trans}}{T_{trans} + 2T_{prop} \left(\frac{1}{S} - 1\right)} = \displaystyle\frac{1}{1 +
+    \frac{2T_{prop}}{T_{trans}}} \left(e - 1\right)
+\]
+
+If our goodput is given as \[
+\displaystyle\frac{1}{1 + \frac{2T_{prop}}{T_{trans}}} \left(e - 1\right)
+\]
+Then the goodput will tend to 1 when either the transmission time tends to infinity,  meaning that after the risky
+$T_{prop}$, no nodes will transmit, or when the propagation time tends to 0, meaning that the risky $T_{prop}$ time will
+be insignificant. 
+
+
+
+% subsubsection Analysis (end)
+% subsection CSMA/CD (end)
+
+% section CSMA / Collision Detection (end)
+
+\section{Questions}\label{sec:questions} % (fold)
+
+% section Questions (end)
+
+\section{Errors Detection}\label{sec:errors_detection} % (fold)
+
+% section Errors Detection (end)
+
+
+\end{document}
