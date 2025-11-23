@@ -41,6 +41,7 @@
 
 \begin{document}
 \maketitle
+\noindent\textbf{Notice:} If you find any mistakes, please open an issue at \href{https://github.com/robomarvin1501/notes\_networking}{\texttt{https://github.com/robomarvin1501/notes\_networking}}
 
 \section{Reminder}%
 \label{sec:Reminder}
