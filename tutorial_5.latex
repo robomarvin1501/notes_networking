@@ -1,0 +1,293 @@
+\documentclass[a4paper]{article}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{mathtools}
+\usepackage{blindtext}
+\usepackage{multicol}
+\usepackage{graphicx}
+\usepackage{placeins}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage[bookmarks=true]{hyperref}
+\usepackage{bookmark}
+\usepackage{bbm}
+\usepackage{wrapfig}
+\usepackage{tabularx}
+\usepackage[autostyle=true]{csquotes}
+\graphicspath{ {./images/} }
+\usepackage[bottom=0.5cm, right=1.5cm, left=1.5cm, top=1.5cm]{geometry}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{exercise}{Exercise}
+\newtheorem{example}{Example}
+\newtheorem{definition}{Definition}[section]
+
+\newcommand{\R}{\ensuremath{\mathbb{R}}}
+\newcommand{\N}{\ensuremath{\mathbb{N}}}
+\newcommand{\Z}{\ensuremath{\mathbb{Z}}}
+\newcommand{\p}{\ensuremath{\mathbb{P}}}
+\newcommand{\E}{\ensuremath{\mathbb{E}}}
+\newcommand{\F}{\ensuremath{\mathcal{F}}}
+\newcommand{\1}{\ensuremath{\mathbbm{1}}}
+\newcommand{\B}{\ensuremath{\mathbbm{B}}}
+
+\title{Tutorial 5 - Spanning Trees}
+\author{Gidon Rosalki}
+\date{2025-11-27}
+
+
+\begin{document}
+\maketitle
+\noindent\textbf{Notice:} If you find any mistakes, please open an issue at \href{https://github.com/robomarvin1501/notes\_networking}{\texttt{https://github.com/robomarvin1501/notes\_networking}}
+\section{Spanning Tree}\label{sec:spanning_tree} % (fold)
+Until now we have worked on a network where we have a single, large, shared channel (think like a bus from computer
+architecture), into which every computer on the network connects. This shared channel was a single shared collision
+domain. As we have seen, as the number of computers increases, so too do the number of collisions, reducing the goodput
+significantly. To resolve this we generally split networks into one or more \textit{broadcast domains}. A
+\textbf{broadcast domain} is the set of all nodes that receive each others layer 2 broadcast frames, and each node in
+the domain could reach every other node via broadcast messages. A \textbf{collision domain} is % TODO from recording 1002 
+It is important to note that from now, a broadcast domain will \textit{not} be the same as a collision domain.
+
+Splitting the network into larger physical topologies, split by switches. Consider the following image: 
+\begin{figure}[H]
+    \center
+    \includegraphics[scale=0.2]{tutorial_5_comp_top}
+    \caption{An example complex topology}
+\end{figure}
+So here, the collision domain is \textit{only} between each switch, across a single link, but every node connected to
+the same switch will be on the same broadcast domain.
+
+There are 2 main ways to connect network elements: 
+% TODO
+% Both a switch and a hub connect between network elements
+% Hubs operate without keeping any state
+% Whatever enters a port of a hub is being broadcasted through all
+% other ports
+% One big collision domain
+% A switch, on the other hand, will keep some state and try to switch
+% packets in a ”smarter” way
+
+\subsection{Switches}\label{sub:switches} % (fold)
+A switch allows any two connected nodes to communicate with each other, usually without collisions. It can store some
+packets in case of contention, and it learns the output ports upon which to send each incoming packet (based on previous
+incoming MAC address). When a node sends a frame, it contains the source, and destination MAC addresses. Whenever a
+switch receives a packet on one of its ports, it saves the pair (SRC MAC, IN PORT) in a table, and if there is an entry
+(DST MAC, PORT $k$) in the table, then it sends it through port $k$, unless $k$ is the incoming port. If it does not
+have that entry, then it sends it on all the ports (aside from the incoming one, since that computer clearly already has
+the packet). \\ 
+Since we do not manually update the network topology on all connected devices every time we connect / disconnect a
+device, switch entries (the above table) have a timeout. If a certain MAC has not been seen for this timeout, then the
+entry is removed, since it may be assumed that the device has been disconnected.
+
+So, we have a clever method for our switches to learn a topology, but this has its limitations, for example, when there
+is a loop in the network. When there is a loop, then the switches will be constantly relearning the origin port for
+packets, which is obviously \textit{not good}. We do not want to only have one patch between 2 LANs, since having more
+than one path is important for redundancy. If a device / link fails, we do not want the entire network to fail as a
+result. However, the problems only begin when there is more than one \textit{active} path between 2 LANs, so to fix
+loops we can: \begin{enumerate}
+    \item Add a counter packets that is reduced at each switch (this counter acts as a lifetime)
+    \item Create a single path between any two LAN segments
+\end{enumerate}
+
+We will try option 2: We would like to create a single active path between any 2 LAN segments, but we should account for the
+existence of multiple physical paths. To avoid loops, we will create an active topology of a tree, placed virtually on
+top of our physical network, such that if there is a failure, the tree can regrow a connection.
+% subsection Switches (end)
+
+% section Spanning Tree (end)
+
+\section{Spanning Tree Protocol}\label{sec:spanning_tree_protocol} % (fold)
+We ignore the hosts in the network while running this protocol (as in, the end computers, remember, switches are not
+considered hosts). After convergence (the tree is connected), we want: \begin{itemize}
+    \item There to be a single root, acknowledged by all 
+    \item Each LAN segment has one \textbf{and only one} active link on the path to the root (through a designated
+        switch)
+    \item Each switch port not taking part in the active tree will be disabled (but listening for changes to allow
+        healing disconnecting/failing parts of the tree)
+\end{itemize}
+
+We will assume (for this course) that each switch has its own unique ID (this should always be the case in real life,
+but sometimes some companies are [REDACTED]). We use special data frames called HELLO (or BPDUs - Bridge Protocol Data
+Units) which contain: \begin{itemize}
+    \item Root ID (RID) - What this switch currently thinks is the root ID of the tree (initially, its own ID)
+    \item The distance to root (DTR) / also known as the root path cost, which is the cost of the path from this switch,
+        to the root 
+    \item The switch ID (SID) of this switch
+\end{itemize}
+Every node performs the following algorithm \textbf{independently} of other nodes: \begin{itemize}
+    \item Send HELLO frames through all ports. If it gets a HELLO frame, update the RID and DTR if necessary
+    \item If it was expecting a HELLO, but did not receive during a defined time period, compute a new RID
+\end{itemize}
+
+A node will select the switch with the lowest RID as its root. Based on a new HELLO packet, the switch will update its
+path to the root (i.e., which ports will remain active, and which ones will be disabled) using the following logic in
+descending order of priority: \begin{enumerate}
+    \item Root ID (which root it believes in)
+    \item Shortest distance to the root 
+    \item Lower SID 
+    \item Lower port number (this is a tie breaker for when there are 2 physical links of the same cost to the same
+        location)
+\end{enumerate}
+If everything proceeds as it should (no failures), then every switch will have the same root port.
+
+From this protocol, we have 3 port types: \begin{itemize}
+    \item Root Port (RP) / Parent Port (PP): This connects a switch towards the root, is active, and there is only
+        \textbf{one} per switch 
+    \item Forwarding port (FP) / Designated Port: A port that forwards traffic for its LAN segment, as in, a port that
+        is connected to the PP for another switch (there is one designated port per segment)
+    \item Blocked Port (BP): The switch will not forward any data from/to those ports. However, the switch will listen
+        to new HELLO messages on those ports in order to potentially heal the network
+\end{itemize}
+RPs, and FPs will be part of the spanning tree. It is important to note that a HELLO packet never leaves the LAN segment
+on which it was transmitted, since it is only important for the two most directly connected switches.
+
+Behold, an example of a spanning tree:
+\begin{figure}[H]
+    \center
+    \includegraphics[scale=0.2]{tutorial_5_span_tree_example}
+    \caption{Spanning tree example}
+\end{figure}
+What happens if different links have different (known) bandwidths? What needs to change? \begin{itemize}
+    \item We would prefer using high bandwidth links over low bandwidth ones
+    \item We would need to change the algorithm into a weighted version
+    \item Would need to select high bandwidth links before low bandwidth ones
+\end{itemize}
+This modification represents an interesting thought experiment, and a reasonable example of a modification that may be
+made for an exam question. 
+
+\subsection{Example}\label{sub:example} % (fold)
+Let us create the spanning tree for a given network (very common exam question). Consider the following network:
+\begin{figure}[H]
+    \center
+    \includegraphics[scale=0.2]{tutorial_5_example_network}
+    \caption{Example network}
+\end{figure}
+
+We begin with switch 0 sending a HELLO packet on segments A, and B. Switch 2 will see RID 0 (since 0 sent its own SID as
+the RID), and since this is lower than its SID (and currently RID) of 2, so it updates its RID to 0, its DTR to 1, and
+the root port to point towards switch 0. \\
+This may also be seen in tabular form: 
+\begin{table}[H]
+     \centering
+     \begin{tabular}{|c|c|c|}
+         \hline
+         SID & RID & DTR \\ \hline
+         1 & 1 & 0 \\ \hline
+         2 & 2 & 0 \\ \hline
+         3 & 3 & 0 \\ \hline
+         4 & 4 & 0 \\ \hline
+         5 & 5 & 0 \\ \hline
+         6 & 6 & 0 \\ \hline
+     \end{tabular}
+     \caption{}
+\end{table} 
+Everyone thinks that they are the root at the beginning. The above steps update the table
+
+\begin{table}[H]
+     \centering
+     \begin{tabular}{|c|c|c|}
+         \hline
+         SID & RID & DTR \\ \hline
+         0 & 0 & 0 \\ \hline
+         1 & 1 & 0 \\ \hline
+         2 & 0 & 1 \\ \hline
+         3 & 3 & 0 \\ \hline
+         4 & 4 & 0 \\ \hline
+         5 & 5 & 0 \\ \hline
+         6 & 6 & 0 \\ \hline
+     \end{tabular}
+     \caption{}
+\end{table} 
+
+Following on from this, switches 1, 4, and 5 do the same as 2 did above: 
+\begin{table}[H]
+     \centering
+     \begin{tabular}{|c|c|c|}
+         \hline
+         SID & RID & DTR \\ \hline
+         0 & 0 & 0 \\ \hline
+         1 & 0 & 1 \\ \hline
+         2 & 0 & 1 \\ \hline
+         3 & 3 & 0 \\ \hline
+         4 & 0 & 1 \\ \hline
+         5 & 0 & 1 \\ \hline
+         6 & 6 & 0 \\ \hline
+     \end{tabular}
+     \caption{}
+\end{table} 
+So in order for segments A, and B to send to the root, they will send to switch 0. Those connections will now be the
+designated / forwarding port. Remember, the root port is where a \textbf{switch} sends towards the root, and the
+forwarding port is where a \textbf{LAN} sends towards a root.
+
+This has left us with the following network: \begin{figure}[H]
+    \center
+    \includegraphics[scale=0.2]{tutorial_5_spanning_tree_step_one}
+    \caption{}
+\end{figure}
+
+Now, switches 1, 2, 4, and 6 send HELLO packets on C (in reality, all LANs would have these packets sent on them in
+parallel, but it is easier to calculate 1 at a time). Switches 1, 2, and 4 have already learned that 0 is the root, with
+a cost of 1, so they send on C (RID=0, DTR=1, SID $\in \left\{1, 2, 4\right\}$). So now, 6 updates its RID from 6 to 0,
+and DTR to 2: 
+\begin{table}[H]
+     \centering
+     \begin{tabular}{|c|c|c|}
+         \hline
+         SID & RID & DTR \\ \hline
+         0 & 0 & 0 \\ \hline
+         1 & 0 & 1 \\ \hline
+         2 & 0 & 1 \\ \hline
+         3 & 3 & 0 \\ \hline
+         4 & 0 & 1 \\ \hline
+         5 & 0 & 1 \\ \hline
+         6 & 0 & 2 \\ \hline
+     \end{tabular}
+     \caption{}
+\end{table} 
+On LAN C, to pick the designated port it evaluates the cost to root, the switch ID, and the port ID. Since switches 1,
+2, and 4 tie with the lowest RID, we move to the next level which is the SID. SID 1 is the lowest, so switch 1 is the
+forwarding port for LAN C.
+
+Now, switches 3, 4, and 5 send HELLO on LAN D. 3 updates its RID to 0, and DTR to 2: 
+\begin{table}[H]
+     \centering
+     \begin{tabular}{|c|c|c|}
+         \hline
+         SID & RID & DTR \\ \hline
+         0 & 0 & 0 \\ \hline
+         1 & 0 & 1 \\ \hline
+         2 & 0 & 1 \\ \hline
+         3 & 0 & 2 \\ \hline
+         4 & 0 & 1 \\ \hline
+         5 & 0 & 1 \\ \hline
+         6 & 0 & 2 \\ \hline
+     \end{tabular}
+     \caption{}
+\end{table} 
+As a result, switch 4 is the designated on D. It is designated instead of 5, despite them having the same DTR, because 4
+has a lower SID.
+
+Now, switches 3 and 6 send HELLO on LAN E. There are no switch updates to happen, aside from switch 3 being the
+designated on LAN E, since its SID is lower than that of switch 6. 
+
+We can now disable all the links that do not contain a Root Port, or a Forwarding Port, and then all the switches that
+do not connect at least 2 LANs (as in, the switch needs at least 1 Forwarding Port, and at least 1 Root Port). We are
+now left with the final (virtual) network topology tree: 
+\begin{figure}[H]
+    \center
+    \includegraphics[scale=0.2]{tutorial_5_spanning_tree_completed}
+    \caption{}
+\end{figure}
+
+% subsection Example (end)
+
+% section Spanning Tree Protocol (end)
+
+\section{Questions}\label{sec:questions} % (fold)
+
+% section Questions (end)
+
+\end{document}
