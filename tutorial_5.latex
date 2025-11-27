@@ -47,9 +47,10 @@ Until now we have worked on a network where we have a single, large, shared chan
 architecture), into which every computer on the network connects. This shared channel was a single shared collision
 domain. As we have seen, as the number of computers increases, so too do the number of collisions, reducing the goodput
 significantly. To resolve this we generally split networks into one or more \textit{broadcast domains}. A
-\textbf{broadcast domain} is the set of all nodes that receive each others layer 2 broadcast frames, and each node in
-the domain could reach every other node via broadcast messages. A \textbf{collision domain} is % TODO from recording 1002 
-It is important to note that from now, a broadcast domain will \textit{not} be the same as a collision domain.
+\textbf{broadcast domain} is the set of all nodes that receive each others layer 2 broadcast frames. Each node in
+the domain could reach every other node via broadcast messages. A \textbf{collision domain} is who can interfere with
+whom on the wire. It is important to note that from now, a broadcast domain will \textit{not} be the same as a collision
+domain.
 
 Splitting the network into larger physical topologies, split by switches. Consider the following image: 
 \begin{figure}[H]
@@ -57,18 +58,16 @@ Splitting the network into larger physical topologies, split by switches. Consid
     \includegraphics[scale=0.2]{tutorial_5_comp_top}
     \caption{An example complex topology}
 \end{figure}
-So here, the collision domain is \textit{only} between each switch, across a single link, but every node connected to
-the same switch will be on the same broadcast domain.
+So here, the collision domain is \textit{only} between each switch, and either switch or node, across a single link, but
+every node connected to the same switch will be on the same broadcast domain.
 
-There are 2 main ways to connect network elements: 
-% TODO
-% Both a switch and a hub connect between network elements
-% Hubs operate without keeping any state
-% Whatever enters a port of a hub is being broadcasted through all
-% other ports
-% One big collision domain
-% A switch, on the other hand, will keep some state and try to switch
-% packets in a ”smarter” way
+There are 2 main ways to connect network elements, switches and hubs. Hubs are stupid. They are boxes, with many ports,
+and you connect a computer to each port. Whenever they receive a packet on a given port, they rebroadcast it on all
+other ports. They do not keep state, they do not cache messages to be sent when they will not collide. They are thus one
+very large collision domain. \\ 
+On the other hand, switches will retain state, cache messages to avoid collisions, and move packets in a smarter way,
+such that packets only intended for one recipient will only go to that recipient. They thus split their connected
+components to many individual collision domains. 
 
 \subsection{Switches}\label{sub:switches} % (fold)
 A switch allows any two connected nodes to communicate with each other, usually without collisions. It can store some
@@ -282,11 +281,122 @@ now left with the final (virtual) network topology tree:
     \caption{}
 \end{figure}
 
+We may also try an alternative method, which is less demonstrative of the realities, but is easier for us humans. Let us
+begin just with the LANs: 
+\begin{figure}[H]
+    \center
+    \includegraphics[scale=0.2]{tutorial_5_just_lans}
+    \caption{}
+\end{figure}
+
+We now add the root switch, and its connections. In this case, switch 0, with FPs from both A, and B. We may now go to
+the next unconnected LAN (C), and find its lowest DTR. Since it is connected to 0 through both switches 1, and 2, both
+with a DTR of 1, we connect in switch 1 with the corresponding FP, and RP, and disconnect 2: 
+\begin{figure}[H]
+    \center
+    \includegraphics[scale=0.2]{tutorial_5_lans_step2}
+    \caption{}
+\end{figure}
+We may repeat this this by D, and then E by the same path, and will wind up with the same result. Either method may be
+used in an exam / homework, depending on what the individual finds the easiest. 
+
+Let us now consider, what happens if switch 0 crashes? \\ 
+\begin{figure}[H]
+    \center
+    \includegraphics[scale=0.2]{tutorial_5_0_crashed}
+    \caption{}
+\end{figure}
+
+Now, switch 1 will become the root of the tree, switch 2 replaces switch 0 on LAN A, switch 6 replaces 3 on LAN E, and
+switch 4 now uses port 1 as its RP, instead of port 2, since it is the same distance, but a lower port number. 
+
+If instead switch 1 crashes, then switch 2 will replace it, as no HELLO was observed on LAN C. These kinds of changes
+are also common questions, and the best way to resolve them is by intuitive understanding, probably gained form doing
+lots of examples.
 % subsection Example (end)
 
 % section Spanning Tree Protocol (end)
 
 \section{Questions}\label{sec:questions} % (fold)
+\subsection{Part 1}\label{sub:part_} % (fold)
+The network is composed from: \begin{itemize}
+    \item LAN segments (horizontal lines): marked with capital letters
+    \item End-nodes (triangles): marked with small letters
+    \item Switches (squares): marked with numbers (those are their unique IDs)
+\end{itemize}
+MAC addresses of end nodes are named by their ID (e.g., station a: MAC(a)). MAC addresses of nodes that are connected to
+more than one LAN are marked by the node's ID and the PORT number (e.g., MAC(b,3)). 
+
+Run the STP algorithm when the dotted lines (connected to d) are disconnected. Mark the roots, disabled ports /
+switches, and parent (root) ports, if they exist. 
+\begin{figure}[H]
+    \center
+    \includegraphics[scale=0.2]{tutorial_5_exam_question_p1}
+    \caption{}
+\end{figure}
+
+I am not going to include here the step by step drawing of a diagram, because frankly, drawing in LaTeX is quite a lot
+of effort. I will instead describe the steps, and you may draw your own diagram as you follow along. The final answer
+will be included below. If we begin from the LANs, let us pick the root switch to be 1 (it has the lowest ID), which is
+between LANs H and F. If we now connect D, then switch 3 will be connected to the root through LAN H, since this is the
+lowest port ID. To now connect in LAN 3, we see that it is also connected through switch E, since this is its shortest
+path to the root. LAN K is simply connected through switch 2, to LAN H, and A will also connect through switch 2. LAN G
+only has one connection, to switch 7, so it is connected there. Switch 7 will now connect to LAN A (and thus switch 2).
+LAN C will connect to switch 5, and finally LAN B will connect to switch 4, since this is its shortest path to the root.
+So below is the resultant network topology: 
+\begin{figure}[H]
+    \center
+    \includegraphics[scale=0.2]{tutorial_5_exam_question_p1_sol}
+    \caption{}
+\end{figure}
+
+% subsection Part 1 (end)
+
+\subsection{Part 2}\label{sub:part_} % (fold)
+Should we run the STP algorithm again, but this time where the dotted lines are connected, then there will be no change.
+% subsection Part 2 (end)
+
+\subsection{Part 3}\label{sub:part_} % (fold)
+Assume that the network has been working for a long time and that all end-nodes have sent a message to all other
+end-nodes over all ports.
+
+Fill in the switching table of switch 1: \begin{table}[H]
+     \centering
+     \begin{tabular}{|c|c|}
+         \hline
+         MAC Address & Port \\ \hline 
+         MAC(a) & 1 \\ \hline 
+         MAC(b) & 2 \\ \hline 
+         MAC(c) & 2 \\ \hline 
+         MAC(d, 1) & 1 \\ \hline 
+         MAC(d, 2) & 1 \\ \hline 
+         MAC(d, 3) & 1 \\ \hline 
+         MAC(d, 4) & 1 \\ \hline 
+     \end{tabular}
+     \caption{}
+\end{table} 
+
+Fill in the switching table of switch 2: \begin{table}[H]
+     \centering
+     \begin{tabular}{|c|c|}
+         \hline
+         MAC Address & Port \\ \hline 
+         MAC(a) & 3 \\ \hline 
+         MAC(b) & 2 \\ \hline 
+         MAC(c) & 2 \\ \hline 
+         MAC(d, 1) & 2 \\ \hline 
+         MAC(d, 2) & 2 \\ \hline 
+         MAC(d, 3) & 2 \\ \hline 
+         MAC(d, 4) & 1 \\ \hline 
+     \end{tabular}
+     \caption{}
+\end{table} 
+
+% subsection Part 3 (end)
+
+
+
+
 
 % section Questions (end)
 
