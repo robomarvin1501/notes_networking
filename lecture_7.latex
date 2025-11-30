@@ -140,6 +140,75 @@ Most DNS servers do not actually know the address for a given URL (name). A DNS 
 \end{enumerate}
 For those curious for more information, I recommend reviewing the documentation at
 \href{https://docs.pi-hole.net/guides/dns/unbound}{\texttt{pihole}} (it is also just generally a wonderful resource).
+
+\subsubsection{DNS caching}\label{sec:dns_caching} % (fold)
+As we can see, there may be many queries that take place before the address is actually found. All these queries take
+place before actual communication, which could cause a massive amount of latency before starting the operation that you
+want to carry out. \\ 
+To try and resolve this, we use \textbf{caching}. Since top level domains rarely change, and popular sites are visited
+often, local DNS servers often have the addresses of these domains cached, such that when your computer requests it, it
+does not need to go ask the root, but can rather immediately respond from its cache. \\
+These cache fields include Time To Live (TTL) fields, and the entry is deleted after this time expires. This helps
+reduce the risk of outdated caches returning bad data.
+
+% subsubsection DNS caching (end)
+
+\subsubsection{Resource Records}\label{sec:resource_records} % (fold)
+The records stored in the DNS database is known as Resource Records (RR). Their format is (name, value, type, ttl).
+There are a few different types: \begin{itemize}
+    \item A: name is hostname, and value is IP address 
+    \item NS: Name is a domain (such as foo.com), and value is the hostname of the authoritative name server for this
+        domain
+    \item PTR: The name is the reversed IP quads (78.56.34.12.in-addr.arpa), and the value is the corresponding hostname 
+    \item CNAME: Name is an alias name for some canonical name (www.cs.mit.edu is really eecsweb.mit.edu), the value is
+        the canonical name 
+    \item MX: Value is the name of the mailserver associated with name. This also includes a weight / preference
+\end{itemize}
+
+With this, we can reconsider the DNS request: \begin{enumerate} 
+    \item Ask the resolver for www.google.com. Assume that no previous results are cached at the recursive resolver 
+    \item Query the root servers. The answer is downward delegation, sending an NS request to find the TLD server for
+        com: \\
+        com NS a.gtldservers.net \\
+        A response is then received: \\ 
+        a.gtld-servers.net A 75.292.124.59
+    \item A query is then sent to the .com zone authority servers, and results in another downwards delegation, with an NS
+        request sent to find the google zone authority: \\ 
+        google.com NS ns1.google.com \\ 
+        And a response received: \\ 
+        ns1.google.com A 122.45.212.57
+    \item Finally, based off the previous response, query the google.com zone authority servers, and get a response
+        of the desired location:  www.google.com A 24.122.49.76
+\end{enumerate}
+
+Resource records need to be entered into DNS, for example, whenever one creates a new startup. Let us say you create the
+startup \enquote{FooBar} (by the time you finish reading this, hopefully Google will have made you an offer for your
+company, in exchange for an astounding amount of money). You acquire a block of adress space from an ISP, let us say you
+get 212.44.9.128/24. You now register \href{https://youtu.be/dQw4w9WgXcQ?si=Tr2StnROtw-ih67s}{\texttt{foobar.com}}, and
+provide a registrar with names and IP addresses of your authoritative name server. This registrar then inserts RR pairs
+into the com TLD server, and whenever people request your site, they will first be directed to your authoritative DNS
+server.
+% subsubsection Resource Records (end)
+
+\subsubsection{Security - vulnerabilities and solutions}\label{sec:security_vulnerabilities_and_solutions} % (fold)
+DNS is massively important. Without it, you cannot access any websites. Furthermore, your online identity is
+inextricably connected to your email. Someone could hijack the DNS for your mail server, and pretend to be you. DNS is
+the root of trust for the web, when navigating to one's bank website, one expects to be taken to said website, but if
+the DNS record is compromised, a bad actor could phish all their information. 
+
+A first major problem we may discuss is DoS, or Denial of Service. Here, one floods DNS servers with request until they
+fail. In 2002 and 2015 there were massive Distributed DoS, or DDoS attacks against the root name servers. However,
+thanks to caches, most users did not even notice, since the root zone file is cached almost everywhere. More targeted
+attacks can be more effective though, blocking off a local DNS server means that that locality cannot access DNS, and
+blocking an authoritative server would mean that that domain is inaccessible. 
+
+When sitting at a café, and surfing the web, ones laptop can access a site like google.com by asking the local name
+server. This is run by the café (or their contractor), and can return you \textit{any answer that they please}. This can
+encourage \textbf{man in the middle attacks}, where there is a site that forwards your query to Google, and forwards
+back the reply to you, changing anything they like in either direction. You cannot know that you are getting the correct
+data (though using TLS enabled websites, those that run HTTPS helps prevent this).
+
+% subsubsection Security - vulnerabilities and solutions (end)
 % subsection DNS (end)
 % section IP Networks - Interconnecting LANs (end)
 
