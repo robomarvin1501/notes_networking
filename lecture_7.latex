@@ -1,0 +1,146 @@
+\documentclass[a4paper]{article}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{mathtools}
+\usepackage{blindtext}
+\usepackage{multicol}
+\usepackage{graphicx}
+\usepackage{placeins}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage[bookmarks=true]{hyperref}
+\usepackage{bookmark}
+\usepackage{bbm}
+\usepackage{wrapfig}
+\usepackage{tabularx}
+\usepackage[autostyle=true]{csquotes}
+\graphicspath{ {./images/} }
+\usepackage[bottom=0.5cm, right=1.5cm, left=1.5cm, top=1.5cm]{geometry}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{exercise}{Exercise}
+\newtheorem{example}{Example}
+\newtheorem{definition}{Definition}[section]
+
+\newcommand{\R}{\ensuremath{\mathbb{R}}}
+\newcommand{\N}{\ensuremath{\mathbb{N}}}
+\newcommand{\Z}{\ensuremath{\mathbb{Z}}}
+\newcommand{\p}{\ensuremath{\mathbb{P}}}
+\newcommand{\E}{\ensuremath{\mathbb{E}}}
+\newcommand{\F}{\ensuremath{\mathcal{F}}}
+\newcommand{\1}{\ensuremath{\mathbbm{1}}}
+\newcommand{\B}{\ensuremath{\mathbbm{B}}}
+
+\title{Lecture 7}
+\author{Gidon Rosalki}
+\date{2025-11-30}
+
+
+\begin{document}
+\maketitle
+\noindent\textbf{Notice:} If you find any mistakes, please open an issue at \href{https://github.com/robomarvin1501/notes\_networking}{\texttt{https://github.com/robomarvin1501/notes\_networking}}
+\section{IP Networks - Interconnecting LANs}\label{sec:ip_networks_interconnecting_lans} % (fold)
+\subsection{Introduction to IP addressing}\label{sub:introduction_to_ip_addressing} % (fold)
+We will mostly consider IPv4 in this lecture. In this scheme, an IP address is a 32 bit (split across 4 values)
+identifier for a host, router, and interface. An \textit{interface} is the connection between a host / router, and the
+physical link. A router typically has multiple interfaces, where a host typically only has one or two interfaces. They
+each will have IP addresses associated with each interface. An example would be 192.168.1.178. The IP address is split
+into the subnets, and host, where the subnets are indicated by the higher order bits, and the host by the lower order
+bits. So in our example, our host 178 is on the subnet 192.168.1. The router can have many subnets, across different
+ports. Traffic may be passed within a single subnet trivially, but to communicate across subnets, one must involve the
+router. 
+
+For this kind of addressing, we use CIDR: Classless InterDomain Routing. The subnet portion of the address is of an
+arbitrary length, with an address format a.b.c.d/x. Here, x is the number of bits in the subnet portion of the address.
+In the above example of an IP address, it would be given as 192.168.1.178/24, indicating that the first 24 bits indicate
+the subnet, and the last 8 (the number 178) indicates the host. This x is also called the subnet mask, because that is
+the size of the bitwise mask we apply to get the host.
+
+So this builds into why the internet is not just a single, huge LAN. Each switch stores a table of every MAC it knows,
+which given the size of the internet, would not be manageable. Instead, we use \textbf{hierarchical addressing}. This
+way, each ISP has a block of IP addresses, advertising to the rest of the world that any datagram whose x first bits
+match its blocks should be sent to it, and then handles routing from the rest of the internet into its IP addresses
+itself. An organisation may well rent a large block of these from an ISP. Should an organisation renting from an ISP
+change ISP, then the new ISP will begin advertising this address as well, rather than the organisation changing all its
+IPs. The method used here is longest prefix matching, and everyone routes towards the IP that matches the longest part
+of the prefix. ISPs get assigned blocks of IP addresses by ICANN (Internet Corporation for Assigned Names and Numbers),
+which handles allocating IP addresses, DNS, and assigns domains.
+
+The IP also handles demultiplexing, where it needs to be decided where to send the packet in the end user. There is a
+field in the packet header called the \enquote{upper level} field. If it's TCP, then it is sent to the process handling
+TCP packets. Similarly for UDP, ICMP, and so on. There is a similar demultiplexing for layers 2 and 3, using the type
+field in Ethernet, and between layers 4 and 5 with ports. There are $2^{16}$ ports, allowing a lot of choice. 
+% subsection Introduction to IP addressing (end)
+
+\subsection{DHCP}\label{sub:dhcp} % (fold)
+One needs to \textit{acquire} an IP address from somewhere. This can be hard-coded into a system, by its administrator,
+but this is liable to cause errors. What if it changes networks / subnets? What if someone else is already using this
+IP address? The IP will no longer be valid. To resolve this we have \textbf{DHCP}: Dynamic Host Configuration Protocol.
+This dynamically gets IP addresses from serves, and behaves \enquote{plug and play}, like adding more switches to a
+network.
+
+\subsubsection{Overview}\label{sec:overview} % (fold)
+The goal is to allow a host to dynamically obtain an IP address from the network when it joins. This IP address is
+leased to the host, since the IP may be handed to \textit{any} host. It can renew its lease on this address later,
+should it still be connected. This allows reusing addresses, since addresses should only be held when the device is
+connected, and active. 
+
+Upon connection, the host broadcasts the DHCP discover message. The DHCP server responds with an offer. The host
+requests an IP address with a \enquote{DHCP request}, and the server sends it an address using a \enquote{DHCP ack} .
+
+Despite this, DHCP is more than just the IP address. It also contains the address of the first hop router for the
+client, the name and IP address of the DNS server, and the network mask (indicating network vs host portion of the
+address).
+% subsubsection Overview (end)
+
+\subsubsection{Example}\label{sec:example} % (fold)
+A laptop connects to a network, and requires an IP address, the address of the first hop router, and the DNS server. To
+achieve this, it makes use of DHCP. It sends a DHCP request, which is encapsulated in UDP, which is in turn encapsulated
+in IP, within the 802.1 Ethernet protocol. This is sent over Ethernet frame broadcast to FFFFFFFFFFFF on the LAN, and is
+thus received at the router running the DHCP server. This Ethernet frame is then demultiplexed into IP, into UDP, and
+into DHCP. The DHCP server then creates a \textbf{DHCP ACK} which contains the client's IP address, the IP address of
+the first hop router for the client, the name, and the IP address of the DNS server. The client now knows its IP
+address, the name and IP address of the DNS server, and the IP address of its first-hop router.
+% subsubsection Example (end)
+
+\subsubsection{Destination IP address - Naming and addressing}\label{sec:destination_ip_address_naming_and_addressing} % (fold)
+If you want to call someone, then you need their phone number. One cannot just dial \enquote{Alice} without it.
+Similarly, to send them mail, you need their address. Similarly, in the internet, to reach Google, one would need their
+IP address. Humans are really bad at remembering endless series of numbers, so instead we need a method that can map
+human memorable names onto IP addresses. These names provide little (if any) information about the destination location,
+in contrast to the IP addresses which are hierarchical, and related to the host location. 
+
+Names are easier to remember, and provide an abstraction to the addresses. One can migrate ones website to a different
+IP address, but maintain the name, renumbering the address to which it resolves, thus making this invisible to the
+users. Additionally, the name may map to multiple IP addresses, enabling load balancing, reducing latency by using the
+nearest server, and tailoring the content based on the requester's location / identity. Additionally, one may have
+multiple names for the same address, a website may buy all the possible similar domains for their site, such as the
+.com, .org, .co.il, and so on endings, for security, and reachability reasons.
+% subsubsection Destination IP address - Naming and addressing (end)
+% subsection DHCP (end)
+
+\subsection{DNS}\label{sub:dns} % (fold)
+The Domain Name System (DNS) is a system to solve this name resolution problem, first proposed in 1983 by Paul
+Mockapetris. DNS is distributed database, containing a hierarchy of name servers. It contains a simple client / server
+architecture, and the protocol runs in the application layer. It adds some amount of hierarchy to the namespace, as
+opposed to the original, flat namespace. For example, many domains are contained within the \enquote{.com} top level
+domain (TLD), and Google owns all the domains that end \enquote{google.com}, such as mail.google.com, and so on. Data is
+organised as a tree structure, where each zone is authoritative for its own local data.
+
+Most DNS servers do not actually know the address for a given URL (name). A DNS query often follows the following path:
+\begin{enumerate}
+    \item Ask local DNS server
+    \item Local DNS server does not know, so it checks the root DNS server 
+    \item If the root does not know, then it checks the first level down DNS (for example, edu, com, etc.)
+    \item If this does not know, then it asks the next level down, the authoritative DNS server
+    \item And so on down the chain
+\end{enumerate}
+For those curious for more information, I recommend reviewing the documentation at
+\href{https://docs.pi-hole.net/guides/dns/unbound}{\texttt{pihole}} (it is also just generally a wonderful resource).
+% subsection DNS (end)
+% section IP Networks - Interconnecting LANs (end)
+
+\end{document}
