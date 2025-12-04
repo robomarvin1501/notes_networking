@@ -1,0 +1,195 @@
+\documentclass[a4paper]{article}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{mathtools}
+\usepackage{blindtext}
+\usepackage{multicol}
+\usepackage{graphicx}
+\usepackage{placeins}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage[bookmarks=true]{hyperref}
+\usepackage{bookmark}
+\usepackage{bbm}
+\usepackage{wrapfig}
+\usepackage{tabularx}
+\usepackage[autostyle=true]{csquotes}
+\graphicspath{ {./images/} }
+\usepackage[bottom=0.5cm, right=1.5cm, left=1.5cm, top=1.5cm]{geometry}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{exercise}{Exercise}
+\newtheorem{example}{Example}
+\newtheorem{definition}{Definition}[section]
+
+\newcommand{\R}{\ensuremath{\mathbb{R}}}
+\newcommand{\N}{\ensuremath{\mathbb{N}}}
+\newcommand{\Z}{\ensuremath{\mathbb{Z}}}
+\newcommand{\p}{\ensuremath{\mathbb{P}}}
+\newcommand{\E}{\ensuremath{\mathbb{E}}}
+\newcommand{\F}{\ensuremath{\mathcal{F}}}
+\newcommand{\1}{\ensuremath{\mathbbm{1}}}
+\newcommand{\B}{\ensuremath{\mathbbm{B}}}
+
+\title{Tutorial 6 - Layer 3}
+\author{Gidon Rosalki}
+\date{2025-12-04}
+
+
+\begin{document}
+\maketitle
+\noindent\textbf{Notice:} If you find any mistakes, please open an issue at \href{https://github.com/robomarvin1501/notes\_networking}{\texttt{https://github.com/robomarvin1501/notes\_networking}}
+\section{Introduction}\label{sec:introduction} % (fold)
+We are now moving over to layer 3. For the first half of the semester we have been dealing with level 2, handling
+multiple hosts sharing a collision domain, and most of the probability problems (there will still be some in TCP, but we
+have sorted most of the probability now). When sharing a collision domain, every node connected will hear every
+transmitted message. We also saw adding switches, such that there can be messages sent to single hosts, rather than
+broadcast to everyone. These switches handled connecting many broadcast domains, using the STP (Spanning Tree Protocol).
+
+We will begin discussing today transmitting outside of a broadcast domain, by adding routers (remember, we cannot have
+the entire internet on a single broadcast domain, as discussed in the lecture this week). \\
+Every node in the network needs to have a unique address. This is called a MAC address. There is a unique MAC address
+for every network interface card (NIC), it is 48 bits (6B) long. Since it is dependent on NICs, since a single host can
+have many NICs, it can also have many MAC addresses. MAC addresses are known as flat, so we cannot infer the location of
+a device from its address, and they are vendor specific (vendors buy blocks of MAC addresses, to prevent people from
+having the same address). These flat addresses are great, but we want to have hierarchical addressing, such that it also
+encodes location. 
+
+We will discuss today what happens behind the scenes when one plugs a host into a layer 2 network, and what happens to
+connect between a set of layer 2 networks.
+
+% section Introduction (end)
+
+\section{Layer 3 Network}\label{sec:layer_network} % (fold)
+
+\subsection{Internet Protocol (IP)}\label{sec:internet_protocol_ip_} % (fold)
+The IP address represents a device within the internet. It is 32 bits long, and usually presented as a combination of 4,
+3 digit numbers in the 8 bit range. Localhost is a special IP, local to your machine, and is 127.0.0.1. Your home router
+is almost always something in the options of 192.168.1.1, 10.0.0.1, or 172.17.x.x.
+
+IP is used by most internet applications, so therefore to use the internet you must have one. It also has an expiration
+time, to allow its reuse when devices disconnect from the network (consider TTL in STP). 
+
+\subsubsection{Packets}\label{sec:packets} % (fold)
+Messages in layer 3 are called \textit{packets}, unlike the layer 2 frames. Below is a description of the packet header: 
+\begin{figure}[H]
+    \center
+    \includegraphics[scale=0.2]{tutorial_6_packet_shape}
+    \caption{IP packet description}
+\end{figure}
+We will note that the concept of security is not built into the internet packets, since bad actors were not particularly
+considered when the original internet was implemented. In order to prevent this in the modern day, we have added
+security on top of it (such as TLS). 
+
+In layer 3, a packet is consisted of \begin{table}[H]
+     \centering
+     \begin{tabular}{|c|c|c|}
+         \hline
+         SRC IP & DST IP & DATA \\ \hline
+     \end{tabular}
+     \caption{Packet}
+\end{table} 
+This is in contrast to a frame in layer 2: \begin{table}[H]
+     \centering
+     \begin{tabular}{|c|c|c|}
+         \hline
+         SRC MAC & DST MAC & DATA \\ \hline
+     \end{tabular}
+     \caption{Frame}
+\end{table} 
+However, this has not thrown away the above data. If you open up the data portion, you will see the source and
+destination IP. Layer 2 will simply ignore these parts, since they are not relevant to it.
+% subsubsection Packets (end)
+
+\subsubsection{Subnets}\label{sec:subnets} % (fold)
+Given a host A, and a host B, it is possible to know whether or not they share a LAN based off the IP subnet
+information. An IP subnet is a segmented piece of a larger IP network, allowing efficient routing, and management of IP
+addresses. The internet is composed of many subnets. A subnet usually contains a range of IP addresses, we define a
+subnet using the IP prefix, in the form of IP/<int>. For example, 211.12.3.0/24. The prefix is the number before the
+slash, where the number after the slash is the prefix size. This is also known as the subnet mask. Here, the 24 means
+that the first 24 bits are constant within this subnet, and only the last 8 may change. The greater the prefix size, the
+\textbf{fewer} addresses the subnet contains. In this example, the subnet mask is 255.255.255.0 (since this way there
+are 24 1s, followed by 8 0s when converting the address into binary). \\
+In IPv4, there are insufficient IP addresses for the modern internet. We are not discussing IPv6 extensively in this
+course, but in contrast to the 4 groups of 3 decimal numbers, and IPv6 address is comprised of 8 groups of 4 hexadecimal
+digits.
+
+A router is a networking device that forwards packets between computer networks. Each of the router's connections
+belong to different IP subnet. Much like how switches mapped MAC's to ports, routers map an IP subnet to a port. In the
+below example, there are 3 subnets: \begin{itemize}
+    \item 223.1.1.0/24
+    \item 223.1.2.0/24
+    \item 223.1.3.0/24
+\end{itemize}
+\begin{figure}[H]
+    \center
+    \includegraphics[scale=0.2]{tutorial_6_subnet_example}
+    \caption{Subnet example}
+\end{figure}
+% subsubsection Subnets (end)
+% subsection Internet Protocol (IP) (end)
+
+\subsection{Address Discovery Protocols}\label{sec:address_discovery_protocols} % (fold)
+Getting an IP address is an important part of using the internet, since otherwise, you \textit{cannot}. When you first
+connect to a network (be it WiFi, Ethernet, or anything else), something needs to give you an IP address for the local
+network. There are several ways on which you can get an IP address. The network admin can provide one (human resource
+expensive, and slow), the ISP can provide one (unnecessary, they should not be involved in a local network), or a
+service within the network can provide one. We will focus on that option, it seems to be the best.
+% section Address Discovery Protocols (end)
+
+\subsection{DHCP}\label{sec:dhcp} % (fold)
+Each host needs to dynamically obtain its IP address when it joins the network. To do this, it needs to use  some
+central entity which handles the IP distribution within the local network. This service needs to support mobile users
+who want to join the network. It needs to support renewing the lease of addresses in use, and allow the reuse of
+addresses for devices that are no longer connected (in short, an address is not for an individual host, but can be given
+to other hosts when the former host is not connected).
+
+In summary, the DHCP protocol is as follows: \begin{enumerate}
+    \item Host: sends \textit{DHCP Discover} [optional]
+    \item Server: sends \textit{DHCP Offer} [optional]
+    \item Host: Request IP address \textit{DHCP Request} 
+    \item Server: Send IP address \textit{DHCP ACK}
+\end{enumerate}
+Since one does not initially know from where to request an IP address, all the messages here are broadcast to the entire
+network, rather than unicast to a single host.
+
+A DHCP packet contains the following fields: \begin{itemize}
+    \item Source IP
+    \item Destination IP
+    \item YIADDR (your IP address)
+    \item Transaction ID
+\end{itemize}
+
+When first connecting, when the DHCP Discover is sent, it needs to include a source IP. This is a problem, since the
+host has not yet been \textit{given} an IP address. As a result, it sends from 0.0.0.0. It is transmitted to
+255.255.255.255, the broadcast IP, so everyone on the network receives it. This is because it does not know the IP of
+the router, so it cannot transmit directly to it. The DHCP Offer will also be broadcast to the entire network (since
+again, the host has no IP address). The Offer will contain a suggested IP address for the host. The host can now send
+(still from 0.0.0.0, and still broadcast) a DHCP Request, requesting the IP that the router suggested, and finally the
+router will respond with a DHCP ACK (over broadcast) informing the host that it has been assigned said address.
+
+\begin{figure}[H]
+    \center
+    \includegraphics[scale=0.2]{tutorial_6_dhcp_assignment}
+    \caption{DHCP assignment}
+\end{figure}
+
+% subsection DHCP (end)
+
+
+\subsection{ARP}\label{sec:arp} % (fold)
+
+% subsection ARP (end)
+
+\subsection{DNS}\label{sec:dns} % (fold)
+
+% subsection DNS (end)
+
+\section{Summarising problems}\label{sec:summarising_problems} % (fold)
+
+% section Summarising problems (end)
+
+\end{document}
