@@ -170,25 +170,311 @@ the router, so it cannot transmit directly to it. The DHCP Offer will also be br
 again, the host has no IP address). The Offer will contain a suggested IP address for the host. The host can now send
 (still from 0.0.0.0, and still broadcast) a DHCP Request, requesting the IP that the router suggested, and finally the
 router will respond with a DHCP ACK (over broadcast) informing the host that it has been assigned said address.
-
 \begin{figure}[H]
     \center
     \includegraphics[scale=0.2]{tutorial_6_dhcp_assignment}
     \caption{DHCP assignment}
 \end{figure}
 
+In many cases, the DHCP server will provide the client with more than just its IP address. It can also provide: \begin{itemize}
+    \item The IP of a \textit{DNS server} (often the router itself, which then forwards on requests to another DNS server)
+    \item The IP address of a \textit{default gateway}: The point at which messages leave the network, not necessarily
+        the same as the DHCP server. That being said, when both are handled by the router, it will be the same.
+    \item The \textit{subnet mask} of the LAN
+\end{itemize}
+Once allocated, the IP address is valid for only a limited time. If you remain connected to the network when this time
+elapses, then your computer will most likely attempt to renew its current address, rather than switching to a new one. \\
+There can be multiple DHCP providers within a network. In this case, the first to offer an IP address is usually the one
+that assigns the IP address. This implies a race condition, which creates security problems (like DHCP spoofing), so it
+is not recommended to do this.
+
+Once the host has an IP address, it can begin to communicate with hosts within, and without, the LAN. To commuicate with
+a service / host in the LAN, the host needs to know its MAC, for layer 2 communication. So, finding a MAC based off an
+IP leads us neatly onto the next topic, ARP.
 % subsection DHCP (end)
 
-
 \subsection{ARP}\label{sec:arp} % (fold)
+ARP is the \textbf{Address Resolution Protocol}. Let there be Host 1, which wants to transmit to Host 2. ARP runs as
+follows: Host 1 will broadcast to the entire network an \textit{ARP request}, which contains the IP of the Host 2,
+asking for its MAC. Host 2 will then send an \textit{ARP Response}, containing its MAC. \\
+ARP messages are on layer 2. Each node contains an ARP table, which maps IP addresses to MAC addresses. Much as with
+every table discussed so far, each entry has a TTL. Remember, IP addresses get remapped. If a valid mapping exists in
+the table, then the host has no need to send an ARP request. Note that there are once again possible race condition,
+enabling ARP spoofing. This will not be extensively discussed in this course.
 
+\subsubsection{Question 1}\label{sec:question_} % (fold)
+Can you verify if your existing IP address is active using ARP?
+
+We could send an ARP request for our own IP, if we got no reply then it’s free.
+% subsubsection Question 1 (end)
+
+\subsubsection{Question 2}\label{sec:question_} % (fold)
+Suggest a way to use more than one DHCP server within a LAN.
+
+Divide the range between the two servers.
+% subsubsection Question 2 (end)
+
+\subsubsection{Question 3}\label{sec:question_} % (fold)
+Let there be the following network:
+\begin{figure}[H]
+    \center
+    \includegraphics[scale=0.2]{tutorial_6_arp_q3_network}
+    \caption{Network}
+\end{figure}
+H1 wants to communicate with another host, with IP address H3, \textbf{within} the same network. In order for this to
+happen, it needs to ask for an IP address, and find the MAC of host H3. What messages are heard over the network?
+
+In phase 1, it needs to talk with the DHCP server to get an IP address. All the hosts will hear \textbf{all} the DHCP
+messages, since they are all sent on broadcast. Once this stage has completed, H1 has all of SRC IP, DST IP, SRC MAC,
+and the DATA, but it is still missing the DST MAC. It now moves on to phase 2, using ARP to getting the DST MAC. It
+broadcasts the ARP Request (so everyone hears it), and H3 responds with the ARP Response on \textbf{unicast}, so only H1
+hears it. 
+% subsubsection Question 3 (end)
+
+\subsubsection{Hierarchical questions}\label{sec:hierarchical_questions} % (fold)
+So far we have assumed that the network is a LAN, but usually, a network is comprised of multiple LANs. Let us consider
+how things change when combining multiple LANs together, and how we transfer LAN specific messages between them.
+% subsubsection Hierarchical questions (end)
+
+\subsubsection{Question 4}\label{sec:question_} % (fold)
+Consider the following network: 
+\begin{figure}[H]
+    \center
+    \includegraphics[scale=0.2]{tutorial_6_q_multiple_lans}
+    \caption{Multiple LANs}
+\end{figure}
+If H1 wants to communicate with another host, with IP address H3: \\
+Question 1: What messages are heard over network 1? \\
+The same messages \\
+Question 2: What messages are heard over network 2? \\
+None of them. \\
+% subsubsection Question 4 (end)
+
+\subsubsection{Broadcast domains}\label{sec:broadcast_domains} % (fold)
+Each router blocks a single broadcast domain. This means that broadcast packets are usually dropped at the router. Until
+now, everything was a single broadcast domain composed of a single or multiple LAN segments. To combine multiple
+broadcast domains, each leg of the router corresponds to a different broadcast domain. So in the previous network, there
+exist 2 broadcast domains, one for each side of the router. 
+
+Consider two hosts, A (MAC a, IP A), and B (MAC b, IP B), connected to different legs of a router $R_0$. In order for A to
+communicate with B over layer 3 (IP, and A already knows B's IP), we need to: \begin{table}[H]
+     \centering
+     \begin{tabular}{|c|c|c|c|c|}
+         \hline
+         Step & SRC MAC & DST MAC & SRC IP & DST IP \\ \hline
+         $A \to R_0$ & a & c & A & B \\ \hline
+         $R_0 \to B$ & d & b & A & B \\ \hline
+         $B \to R_0$ & b & b & B & A \\ \hline
+         $R_0 \to A$ & c & a & B & A \\ \hline
+     \end{tabular}
+     \caption{Steps}
+\end{table} 
+If A does not know B's MAC, then it begins with sending an ARP request. Note that router do \textbf{not} forward ARP
+messages between different networks. 
+
+% subsubsection Broadcast domains (end)
+
+\subsubsection{DHCP Relaying}\label{sec:dhcp_relaying} % (fold)
+We saw what happens to a packet when it transitions from one L2 network, to another, via some router. Mainly the router
+changes the MAC address, and will perform relevant ARP requests. When the DHCP server is outside of the local LAN, to
+get an IP address, the local router (R0) needs to transfer DHCP requests to the other network. This is called
+\textbf{DHCP Relaying}, and R0 is called the \textbf{relay agent}. In this case, R0 will forward requests and replies
+between DHCP server and client, meaning it will forward the DHCP Discover/Request messages and the Offer/Ack messages.
+Messages between the client and the relay agent are sent in broadcast, and messages between the relay agent and the
+DHCP server are sent in unicast. The DHCP server allocates an IP address according to a field which is updated by the
+relay agent. Usually, we would want every LAN to have its own DHCP server (will distribute IPs within the subnet of
+router). 
+
+Consider a network, with H1 on LAN-A, connected to R0 over the leg with the IP 223.1.1.3. R0 is connected to LAN-B, with
+the address 223.1.2.2, and LAN-B has the DHCP server. For H1 to get an IP address, the following will occur:
+\begin{table}[H]
+     \centering
+     \begin{tabular}{|c|c|c|c|c|}
+         \hline
+         Message & SRC MAC & DST MAC & SRC IP & DST IP \\ \hline
+         DHCP discover & MAC(H1) & 0.0.0.0 & broadcast & 255.255.255.255 \\ \hline
+         disc. (GIADDR=223.1.1.3) & MAC(R0, 2) & IP(R0,2) & MAC(DHCP) & IP(DHCP) \\ \hline
+         DHCP offer (223.1.1.x) & MAC(DHCP) & IP(DHCP) & MAC(R0, 2) & IP(223.1.1.3) \\ \hline 
+         DHCP offer (223.1.1.x) & MAC(R0, 1) & IP(R0, 1) & Broadcast & 255.255.255.255 \\ \hline 
+     \end{tabular}
+     \caption{Steps}
+\end{table}
+After the DHCP offer, the protocol will continue the same way with Request and ACK.
+% subsubsection DHCP Relaying (end)
 % subsection ARP (end)
 
 \subsection{DNS}\label{sec:dns} % (fold)
+In order to communicate with a host, we need to know its IP address. Over the internet, we usually assign names for
+making our lives easier, so we need to resolve a name into an IP address. This uses the \textbf{Domain Name Service}
+(DNS) protocol. DNS is a distributed database. Queries are recursively sent to name servers (NS) from top to bottom
+(starting with the last part, hierarchically down the chain until it reaches the end, so www.google.com will begin at
+com, and then google). The Authoritative Name Servers are assigned responsibility for a specific domain.
+
+Let us suppose that we want to find the IP address of www.kernel.org. It is first split into the TLD (top level domain)
+\enquote{org}, and the subdomains. We begin by asking our local DNS resolver, and if it knows the address (in the cache
+or something), then it responds. Otherwise, it begins resolving recursively as follows in this simplified example (with
+www.google.com):
+\begin{figure}[H]
+    \center
+    \includegraphics[scale=0.2]{tutorial_6_dns_resolving}
+    \caption{Simplified DNS lookup}
+\end{figure}
+We begin by asking the root for the entire address. The root responds with with the address of the TLD, which resolves
+the sub parts of the com TLD. We are then sent to the authoritative DNS server of google, which will return the IP to
+the resolver, which may then be transferred onto the host. 
+
+There are two main types of DNS records: \begin{itemize}
+    \item Hostname A IP Address, of the style \textbf{www.kernel.org A 172.105.4.254}. This maps a hostname to an IP
+    \item Hostname NS Server: \textbf{www.kernel.org NS ns21.constellix.com/}. This specifies an authoritative name
+        server for the domain.
+\end{itemize}
+There are also additional types, not discussed here. 
+
+There are currently 13 root servers, called A to M. There are various TLD servers (.com, .net, .edu, .org, etc.). Each
+DNS response (a RR - Resource Record), contains a TTL value for cache storage time. Since NAme server are identified by
+name (e.g. ns.google.com), there could be circular dependencies, one is directed to the authoritative name server which
+is contained within the authoritative name server. A Name Server might add an IP address as a \enquote{glued RR} to help
+the process.
+
+\subsubsection{Full DNS example}\label{sec:full_dns_example} % (fold)
+Our client wants to navigate to www.google.com. It first sends a message to the resolver, asking for the IP address.
+Since, in this mildly contrived example, this name is not in the cache, the resolver begins by turning to the root. The
+root responds with an NS RR: \textbf{ns.com A 63.156.206.38}, directing the resolver to the .com TLD. \\
+The resolver then turns to said TLD, and asks once again to resolve the full URL. It then receives an A response: \\
+\textbf{ns.google.com A 216.239.32.10} \\
+This directs it to the Google authoritative domain server. From there it asks Google's authoritative domain server for
+the URL, and finally receives an A record with the requested IP: \\ 
+\textbf{www.google.com A 173.194.67.147}. This IP is then returned to the client, which may now get on with navigating
+to the domain.
+% subsubsection Full DNS example (end)
 
 % subsection DNS (end)
 
 \section{Summarising problems}\label{sec:summarising_problems} % (fold)
+\subsection{Problem 1}\label{sub:problem_} % (fold)
+A student just purchased a new computer and connected it to her local network (which is connected to the internet via
+her ISP). The student browsed www.youtube.com (via HTTP). It’s the first time the computer is connected to the network.
+All the other network components have been active for a long time. Assume the ARP tables don’t need to be refreshed (TTL
+$\to \infty$). The DNS and DHCP servers are located within the LAN. What messages are transferred from and to the
+computer from the moment it’s connected to the network until the first response from YouTube’s server?
+
+\begin{table}[H]
+     \centering
+     \begin{tabular}{|c|c|c|c|c|c|}
+         \hline
+         Step & Message & SRC MAC & SRC IP & DST MAC & DST IP \\ \hline
+         1 & DHCP discover & PC & 0.0.0.0 & broadcast & 255.255.255.255 \\ \hline
+         2 & DHCP offer & DHCP server & DHCP server & broadcast & 255.255.255.255 \\ \hline
+         3 & DHCP request & PC & 0.0.0.0 & broadcast & 255.255.255.255 \\ \hline
+         4 & DHCP Ack (IP,DNS ...) & DHCP server & DHCP server & broadcast & 255.255.255.255 \\ \hline
+         5 & ARP request – DNS server & PC - & broadcast & - \\ \hline
+         6 & ARP response – DNS server & DNS server & - & PC & — \\ \hline
+         7 & DNS request – youtube.com & PC & PC & DNS server & DNS server \\ \hline
+         8 & DNS response – youtube.com & DNS server & DNS server & PC & PC \\ \hline
+         9 & ARP request – default gw & PC & - & broadcast & - \\ \hline
+         10 & ARP response – default gw & Default gw & - & PC & - \\ \hline
+         11 & HTTP request & PC & PC Default gw & IP(youtube.com) \\ \hline
+         12 & HTTP response & Default gw & IP(youtube.com) & PC & PC \\ \hline
+     \end{tabular}
+     \caption{Solution}
+\end{table} 
+% subsection Problem 1 (end)
+
+\subsection{Problem 2}\label{sub:problem_} % (fold)
+In this problem, all components have been active for a long time. Assume that the switching tables have been erased.
+Assume that the routing tables are updated and complete. 
+\begin{figure}[H]
+    \center
+    \includegraphics[scale=0.2]{tutorial_6_summ_2}
+    \caption{Network graph}
+\end{figure}
+The following IP messages are sent. For this question only, assume that every node knows the MAC and IP addresses of all
+other nodes. On which LAN segments are the following messages heard?
+
+\begin{table}[H]
+     \centering
+     \begin{tabular}{|c|c|}
+         \hline
+         IP message & LAN segments  \\ \hline
+         $a \to b$ & A,B,C,X,Y,Z \\ \hline
+         $a \to z$ &  A,B,C,X,Y,Z \\ \hline
+         $e \to b$ &  A,B,C,X,Y,Z,D,E \\ \hline
+         $x \to z$ &  A,B,C,X,Y,Z \\ \hline
+         $c \to a$ & A,C \\ \hline
+         $z \to c$ & X,Y,Z,C \\ \hline
+     \end{tabular}
+     \caption{Solution}
+\end{table} 
+% subsection Problem 2 (end)
+\subsection{Problem 3}\label{sec:problem_} % (fold)
+For the same network, fill switch 11's table right after the last message is sent.
+\begin{table}[H]
+     \centering
+     \begin{tabular}{|c|c|}
+         \hline
+         MAC address & Port  \\ \hline
+         a & 2 \\ \hline
+         b & - \\ \hline
+         c & 3 \\ \hline
+         x & 1 \\ \hline
+         z & 1 \\ \hline
+         R0,3 & 1 \\ \hline
+     \end{tabular}
+     \caption{Solution}
+\end{table} 
+% subsubsection Problem 3 (end)
+
+\subsection{Problem 4}\label{sub:problem_} % (fold)
+Right after the messages in problem 2, node a sends an IP message to node d. For this question only, assume that:
+\begin{itemize}
+    \item Nodes $a$ and $d$ know the IP addresses of all other nodes 
+    \item All ARP tables are empty
+\end{itemize}
+Reminder, ARP responses are unicast. Describe all the transmitted messages, and in which LAN segments they are heard: 
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|c|c|c|c|c|c|c|}
+        \# & Message & SRC MAC & SRC IP & DST MAC & DST IP & LAN segment \\ \hline
+        1 & ARP Request with IP(R0, 3) & MAC(a) & - & broadcast & - & A, B, C, X, Y, Z  \\ \hline
+        2 & ARP Response with MAC(R0, 3) & MAC(R0, 3) & - & MAC(a) & - & A, X, Y \\ \hline
+        3 & IP message & MAC(a) & IP(a) & MAC(R0, 3) & IP(d) & A, X, Y \\ \hline
+        4 & ARP Request with IP(d) & MAC(R0, 2) & - & broadcast & - & D, E \\ \hline
+        5 & ARP Response with MAC(d) & MAC(d) & - & MAC(R0, 2) & - & D \\ \hline
+    \end{tabular}
+    \caption{Solution}
+\end{table}
+
+Determine if the following claims are true or false:
+\begin{table}[H]
+     \centering
+     \begin{tabular}{|c|c|c|}
+         \hline
+         Claim & Statement & Answer \\ \hline
+         A & Node $d$ will hear an ARP request from node $z$ with $IP (b)$ & F \\ \hline
+         B & Node $d$ will hear an ARP request from node $z$ with IP(e) & F \\ \hline
+         C & Router R0 has (at least) 3 IP addresses & T \\ \hline
+         D & Router R0 has (at least) 3 MAC addresses & T \\ \hline
+         E & Switch 11 has (at least) 4 IP addresses & T \\ \hline
+         F & Switch 11 has (at least) 4 MAC addresses & T \\ \hline
+     \end{tabular}
+     \caption{Solution}
+\end{table} 
+
+After a long time in which the network was active, node $z$ is moved to LAN segment X. All the routing and switching
+table remain like before.
+\begin{table}[H]
+     \centering
+     \begin{tabular}{|c|c|}
+         \hline
+         Statement & Answer \\ \hline
+         Node z needs to sent a DHCP request & F \\ \hline
+         An IP packet from a to z will arrive to z & F \\ \hline
+         An IP packet from d to z will arrive to z & T \\ \hline
+     \end{tabular}
+     \caption{Solution}
+\end{table} 
+
+% subsection Problem 4 (end)
 
 % section Summarising problems (end)
 
