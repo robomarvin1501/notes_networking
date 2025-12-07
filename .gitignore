@@ -2,4 +2,5 @@
 Makefile
 venv/
 homework/
-template.latex
+deployment
+build.sh
