@@ -4,3 +4,4 @@ venv/
 homework/
 deployment
 build.sh
+workdir/
