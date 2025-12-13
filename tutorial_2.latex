@@ -56,7 +56,7 @@ Each layer uses the abstractions provided by the layer below it, and provides se
 
 \begin{table}[H]
      \centering
-     \begin{tabular}{|c|c|c|c|}
+     \begin{tabular}{|p{0.2\textwidth}|p{0.2\textwidth}|p{0.2\textwidth}|p{0.2\textwidth}|}
          \hline
          \# & Layer Name & Data Unit & Function \\ \hline
          1 & Physical & Bit & Transmit and receive raw bits over some physical medium \\ \hline
