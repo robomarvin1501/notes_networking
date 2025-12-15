@@ -1,0 +1,222 @@
+\documentclass[a4paper]{article}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{mathtools}
+\usepackage{blindtext}
+\usepackage{multicol}
+\usepackage{graphicx}
+\usepackage{placeins}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage[bookmarks=true]{hyperref}
+\usepackage{bookmark}
+\usepackage{bbm}
+\usepackage{wrapfig}
+\usepackage{tabularx}
+\usepackage[autostyle=true]{csquotes}
+\usepackage{tikz}
+\usetikzlibrary{automata, positioning, arrows}
+\graphicspath{ {./images/} }
+\usepackage[bottom=0.5cm, right=1.5cm, left=1.5cm, top=1.5cm]{geometry}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{exercise}{Exercise}
+\newtheorem{example}{Example}
+\newtheorem{definition}{Definition}[section]
+
+\newcommand{\R}{\ensuremath{\mathbb{R}}}
+\newcommand{\N}{\ensuremath{\mathbb{N}}}
+\newcommand{\Z}{\ensuremath{\mathbb{Z}}}
+\newcommand{\p}{\ensuremath{\mathbb{P}}}
+\newcommand{\E}{\ensuremath{\mathbb{E}}}
+\newcommand{\F}{\ensuremath{\mathcal{F}}}
+\newcommand{\1}{\ensuremath{\mathbbm{1}}}
+\newcommand{\B}{\ensuremath{\mathbbm{B}}}
+
+\title{Lecture 9}
+\author{Gidon Rosalki}
+\date{2025-12-14}
+
+
+\begin{document}
+\maketitle
+\noindent\textbf{Notice:} If you find any mistakes, please open an issue at \href{https://github.com/robomarvin1501/notes\_networking}{\texttt{https://github.com/robomarvin1501/notes\_networking}}
+
+\section{Interconnecting IP subnets}\label{sec:interconnecting_ip_subnets} % (fold)
+When considering layer 3, we want to connect LANs, or IP subnets. For our uses, they are separated by routers. There are
+2 key characteristics to a network: \begin{enumerate}
+    \item Topology: The physical interconnection structure of the network 
+    \item Routing algorithm: This restricts the set of paths that the messages can follow (like STP)
+\end{enumerate}
+
+\subsection{Topology}\label{sub:topology} % (fold)
+This is how the components are connected. It has some important properties: \begin{itemize}
+    \item Diameter: The maximum distance between any two nodes in teh network (measured in hop count / number of links)
+    \item Nodal degree: How many links connect to a node 
+    \item Bisection bandwidth: The lowest bandwidth between half the nodes, and the other half of the nodes, across all
+        such partitions (consider MAX CUT from algorithms)
+\end{itemize}
+We want to measure what makes a \textit{good} topology. As with everything in life, this is a loaded question, since we
+need to define what is good. One might think that bisection bandwidth would be a good measure, but consider a network
+where $\displaystyle\frac{2}{3}$rds of the nodes are maximally connected, and the other $\displaystyle\frac{1}{3}$rd are
+maximally connected, and they only have a single link between the two. This would not be great, but the bisection
+bandwidth would not consider that, since it talks of halves. \\ 
+Instead, we may consider an expansion of a graph, and examine every partition: \[
+    \displaystyle\min_{S \subset V,\ 0 < \left|S\right| \leq \displaystyle\frac{n}{2}}
+    \left\{\displaystyle\frac{\text{EdgesBetween} \left(S, V \setminus S\right)}{\left|S\right|}\right\} 
+\]
+This is called the \textbf{edge expansion} of a graph. \textbf{Expanders} are graphs with a high edge expansion, i.e.
+close to $\displaystyle\frac{d}{2}$ for a $d$-regular graph. 
+
+There are two main tpes of topologies: \begin{itemize}
+    \item \textbf{Explicit constructions}: Here the nodes are connected with some kind of pattern (so the graph has a structure).
+        The nodes are identified by coordinates, and routing can usually be pre-determined by the coordinates of the
+        nodes. 
+    \item \textbf{Non explicit constructions}: The nodes are connected arbitrarily. There is no structure to the graph,
+        which makes it more extensible in comparison to a regular topology. These often use variations of shortest path
+        routing.
+\end{itemize}
+
+
+\subsubsection{Linear arrays and Rings}\label{sec:linear_arrays_and_rings} % (fold)
+Consider the following two topologies, linear array, and a ring: 
+\begin{center}
+    \begin{tikzpicture}[node distance=3cm]
+        \node[state] (q0) {};
+        \node[state, right of=q0] (q1) {};
+        \node[state, right of=q1] (q2) {};
+        \node[state, right of=q2] (q3) {};
+
+        \draw   (q0) edge[-, above] node{} (q1)
+                (q1) edge[-, above] node{} (q2)
+                (q2) edge[-, above] node{} (q3)
+                ;
+    \end{tikzpicture} \\
+\end{center}
+
+\begin{center}
+    \begin{tikzpicture}[node distance=3cm]
+        \node[state] (q0) {};
+        \node[state, right of=q0] (q1) {};
+        \node[state, right of=q1] (q2) {};
+        \node[state, right of=q2] (q3) {};
+
+        \draw   (q0) edge[-, above] node{} (q1)
+                (q1) edge[-, above] node{} (q2)
+                (q2) edge[-, above] node{} (q3)
+                (q3) edge[-, bend left] node{} (q0)
+                ;
+    \end{tikzpicture} \\
+\end{center}
+
+For the linear array topology: \begin{itemize}
+    \item Diameter = 3 (distance between the two furthest is 3 links)
+    \item Nodal degree = 2 
+    \item Bisection bandwidth = 1
+\end{itemize}
+and the ring: \begin{itemize}
+    \item Diameter = 2 
+    \item Nodal degree = 2 
+    \item Bisection bandwidth = 2
+\end{itemize}
+To describe a linear array, and a ring, in an array nodes will be numbered from $0$ to $n - 1$, with $i$ connencted to
+$i + 1$ for $i < n - 1$. In a ring, nodes are numbered from $0, \dots, n - 1$ as well, but $\forall i\ i$ is connected
+to $i + 1 \mod n$.
+% subsubsection Linear arrays and Rings (end)
+
+\subsubsection{Hypercubes}\label{sec:hypercubes} % (fold)
+If we consider instead hypercubes (4D cubes, or greater), then there are $2 ^ {n}$ nodes, and each node is described by
+its binary representation. There is a link between two nodes with the hamming distance of 1. For an $n$ dimensional
+hypercube, the diameter will be $n$, the nodal degree will be $n - 1$, and the bisection bandwidth will be $2 ^ {n -
+1}$.
+% subsubsection Hypercubes (end)
+
+\subsubsection{Trees}\label{sec:trees} % (fold)
+In a tree, each node has at most 2 children. They are of fixed degree, a diameter of $\log \left(n\right)$, and $O
+\left(1\right)$ bisection bandwidth. To route between nodes $a, b$, one goes up to their common ancestor, and then back
+down to the other node.
+% subsubsection Trees (end)
+% subsection Topology (end)
+
+\subsection{Routing}\label{sub:routing} % (fold)
+We focus for now on routing within a single organisation, called intradomain routing. We will discuss interdomain
+routing later on. We are effective discussing a network of routers, where the links represent IP subnets. \\ 
+Upon receiving a packet, our routing algorithm needs to, very quickly, decide what to do with it, or in other words,
+decide on which link it should send the packet. In order to achieve this, there is often a forwarding table, where one
+matches between header values, and output links. Forwarding is performing this action, and routing is the engine that
+decides where to send each packet. So the engine's output is the forwarding table.
+
+We often work with static link weights. Here we want to compute the shortest paths to IP subnets based on the link
+weights. These are configured by the network operator (we will revisit this), and through this, we determine the next
+hop router (the next router in the path) to every IP subnet.
+
+We have 2 main routing schemes: \begin{itemize}
+    \item Link stae routing: Each router floods information to the network in order to learn the topology,
+        and then each router applies Dijkstra's algorithm to compute the shortest paths 
+    \item Distance vector routing: This is an iterative process, that uses Bellman Ford (similar to STP)
+\end{itemize}
+
+There are 2 ways to classify routing algorthms: \begin{itemize}
+    \item Global: All routers have the complete topology, and link cost information. These are solved with
+        \enquote{link state} algorithms 
+    \item Decentralised: Each router only knows its \textbf{physically} connected neighbours, and the link costs to
+        these neighbours. Solving this involves an iterative process of computation, and information exchange with
+        neighbours. It is solved with \enquote{distance vector} algorithms.
+\end{itemize}
+
+\subsubsection{Link state routing algorithm}\label{sec:link_state_routing_algorithm} % (fold)
+Here we will discuss Dijkstra's algorithm. In the netwrok topology, link costs are known to all nodes. This is
+accomplished via \textit{link state broadcast}. All the nodes have the same information. It computes the paths of the
+lowest cost from one node (the source), to all other nodes. This creates the forwarding table for that node. This is an
+iterative algorithm, where after $k$ iterations, we will know the lowest cost path to $k$ destinations.  \\ 
+Let us define some notation: \begin{itemize}
+    \item $c \left(x, y\right)$ - The link cost from node $x$, to node $y$. This will be infinite if there is no link
+    \item $D \left(v\right)$: The current value of the cost of the path from the source, to the destination 
+    \item $p \left(v\right)$: The predecessor node along the path from the source, to $v$
+    \item $V'$: The set of nodes for whom we definitely know the least cost path
+\end{itemize}
+
+The algorithm will run as follows: \begin{enumerate}
+    \item Initialisation: Set $V' = u$, and for all nodes $v$, if they are adjacent to the starting node $u$, \[
+            D \left(v\right) = c \left(u, v\right)
+        \]
+        and set $D \left(v\right) = \infty$ otherwise
+    \item Loop until all nodes in $V'$: Find a $w \notin V' : D \left(w\right)$ is a minimum. Add $w$ into $V'$, and
+        update $D \left(v\right)$ for every $v$ that is adjacent to $w$, and \textbf{not} in $V'$: \[
+            D \left(v\right) = \min \left(D \left(v\right), D \left(w\right) + c \left(w, v\right)\right) 
+        \]
+        The new cost to $v$ is either the old cost to $c$, or the known shortest path cost to $w$, plus the cost from
+        $w$ to $v$.
+\end{enumerate}
+
+A naïve implementation for $n$ nodes will involve $\displaystyle\frac{n \left(n + 1\right)}{2}$ comparisons, and will be
+$O \left(n ^ {2}\right)$. More efficient implementations are possible (see data structures course), to be performed in
+$O \left(n \log \left(n\right) + \left|E\right|\right)$. The function may oscillate between solutions, and not complete,
+if the link weights are set dynamically. This can occur when the link cost is the amount of carried traffic (for
+example).
+% subsubsection Link state routing algorithm (end)
+
+\subsubsection{Distance vector algorithm}\label{sec:distance_vector_algorithm} % (fold)
+This makes use of Bellman Ford Equation (dynamic programming). Let us define \[
+    d_x \left(y\right) = \text{Lowest cost path cost from }x \text{ to } y
+\]
+Then, \[
+    d_x \left(y\right) = \displaystyle\min_{v} \left\{c \left(x, v\right) + d_v \left(y\right)\right\} 
+\]
+Where the minimum is taken over all the neighbours $v$ of $x$.
+
+The basic idea is that every so often, each node will send its own distance vector estimate to its neighbours. When a
+node $x$ receives this estimate from a neighbour, then it updates its own estimate using BF: \[
+    \forall y \in n\ d_x \left(y\right) \gets \displaystyle\min_{v} \left\{c \left(x, v\right) + d_v \left(y\right)\right\} 
+\] 
+So then, $d_x \left(y\right)$ converges to the actual cost.
+% subsubsection Distance vector algorithm (end)
+
+% subsection Routing (end)
+
+% section Interconnecting IP subnets (end)
+
+\end{document}
