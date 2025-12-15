@@ -213,10 +213,100 @@ node $x$ receives this estimate from a neighbour, then it updates its own estima
     \forall y \in n\ d_x \left(y\right) \gets \displaystyle\min_{v} \left\{c \left(x, v\right) + d_v \left(y\right)\right\} 
 \] 
 So then, $d_x \left(y\right)$ converges to the actual cost.
+
+When a link cost changes, then a node detects the local kink cost change, updates the routing information and
+recalculates the distance vector. If the DV changes, then it notifies its neighbours. \\
+So, good news will travel fast (links getting faster will propagate very quickly), but bad news (link lengths getting
+longer) will propagate slowly. 
 % subsubsection Distance vector algorithm (end)
 
+\subsubsection{Comparison of LS and DV}\label{sec:comparison_of_ls_and_dv} % (fold)
+Complexity: \begin{itemize}
+    \item LS with $n$ nodes, $E$ links, and $O \left(nE\right) $ messages sent, each node will send a broadcast message,
+        flooded to all links 
+    \item DV: Exchange is only between neighbours
+\end{itemize} 
+Convergence speed: \begin{itemize}
+    \item LS: $O \left(n ^ {2}\right)$, may have oscillations 
+    \item DV: Varies, may be routing loops, and may have count to infinity problem (bad news propagates slowly)
+\end{itemize}
+Robustness (router malfunction): \begin{itemize}
+    \item LS: Nodes can advertise the incorrect \textit{link} cost, and each node computes only its own table 
+    \item DV: Nodes can advertise the incorrect \textit{path} cost, and each node's tables are used by others (thus
+        propagating the error through the network, blackholing traffic)
+\end{itemize}
+% subsubsection Comparison of LS and DV (end)
+
+\subsubsection{Real world examples}\label{sec:real_world_examples} % (fold)
+RIP - Routing Information Protocol. This is a distance vector algorithm, used by BSD-Unix in 1982. The distance metric
+is the number of hops. \\ 
+OSPF - Open Shortest Path First. This is an open, publicly available protocol, using the LS algorithm. The OSPF
+advertisement carries one entry per neighbour router, and advertisements are disseminated to the entire network (via
+flooding). Messages are carried directly over IP, rather than over TCP, or UDP.
+% subsubsection Real world examples (end)
 % subsection Routing (end)
 
+\subsection{ARPAnet routing}\label{sub:arpanet_routing} % (fold)
+ARPAnet was a wide area network that predated the internet. It originally (1969) used shortest path routing, with a
+dynamic setting of link weights. They were set to the instantaneous queue length, plus some constant. Each node updated
+its distance computation periodically. \\
+This had some problems. There were protocol oscillations, and a high protocol overhead. Additionally, a long path would
+appear better than a congested path, resulting in an inefficient use of resources.
+
+In 1979 there was a new routing protocol, which averaged the link weight over time in order to reduce fluctuations, and
+the frequency of updates (nicely handling some of the overhead issues). In 1987 it was revised, where traffic was shed
+gradually in order to prevent overreactions to congestions. Additionally, link weights were given upper bounds, in order
+to avoid excessively long paths.
+% subsection ARPAnet routing (end)
+
+\subsection{Traffic management}\label{sub:traffic_management} % (fold)
+Recall layering. We will cover traffic engineering, which is done in the network layer (L3), and handled within
+organisations, by optimising static link weights. We will soon discuss congestion control, which is done in the
+transport layer (L4), through protocols like TCP and UDP.
+
+Traffic engineering is tuning the routing protocol configuration to optimise network performance (often by changing the
+static weights). This is dne through: \begin{itemize}
+    \item \textbf{Measurement}: Measuring the topology (as done at the beginning of the lecture), and the traffic
+        pattern (passively inspecting the traffic)
+    \item \textbf{Network wide models}: Making representations of the topology, and traffic
+    \item \textbf{Network optimisation}: Algorithms to find good configurations, and operational experience (nothing
+        beats experience) to identify constraints
+\end{itemize}
+
+\subsubsection{Theory - Flow optimisation}\label{sec:theory_flow_optimisation} % (fold)
+Recall the max flow problem from algorithms. Given an undirected, weighted graph, with a source vertex, and a target
+vertex, output the maximum flow from $s$ to $t$. This may be done through max flow - min cut. \\
+We need to adapt this to \textit{multicommodity flow}, since every node can send to every node. We will remove $s, t$,
+and add in the demand matrix $D = \left\{d_{ij}\right\}$. There are a few methods to solve this problem: \begin{itemize}
+    \item Maximum multicommodity flow: maximise the total amount of sent traffic 
+    \item Minimise congestion: Minimise the load on the most congested edge 
+    \item Fairness: Distribute the traffic as evenly as possible 
+    \item Etc.
+\end{itemize} 
+Multicommodity optimises the routes from sources to targets, and how traffic is split between routes. We need to ask if
+IP routing optimises this. \\
+To optimise the (static) link weights one begins by computing the shortest paths to other routers based on the link
+weights to determine the next hop to every other router. The link weights are configured by the network operator. 
+
+% subsubsection Theory - Flow optimisation (end)
+
+\subsubsection{ECMP}\label{sec:ecmp} % (fold)
+In Equal Cost Multipath (ECMP), each router computes the shortest paths to each other router, based on the configured
+link weights, and splits traffic designed for said router evenly between all the nodes between them. 
+
+So, our objective given the multicommodity input is to output link weights such that ECMP flow is the optimal solution
+(with respect to the specific objective function). We have used the word \enquote{optimal} here, which assumes that
+there are a set of link weights such that the ECMP flow is optimal. We need to consider if this is in fact always the
+case, and if it is not, if there is always a set of link weights that approximate the optimal solution. 
+
+In short, we cannot always get the optimal solution, sometimes there is not one. Instead, we will change our objective
+to the ECMP flow that is \enquote{closest} to a specific objective function. Turns out that this problem is NP-hard,
+even for simple objective functions. As a result, network operators use (non optimal, but sufficiently good in some real
+life environments) heuristics.
+
+% subsubsection ECMP (end)
+
+% subsection Traffic management (end)
 % section Interconnecting IP subnets (end)
 
 \end{document}
