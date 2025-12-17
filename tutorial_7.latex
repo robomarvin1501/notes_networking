@@ -125,13 +125,52 @@ there are loops longer than 2.
 % subsection Distance vector (end)
 
 \subsection{Link state}\label{sub:link_state} % (fold)
-
+Link state is a \textit{global} routing algorithm. This means that every node maintains a complete picture of
+\textit{every} other router in the network, not just its neighbours. This means that every router knows everything about
+the entire network. The main idea is to iteratively find the shortest path to any destination in the network, employing
+Dijkstra's algorithm to do this. \\
+Similar to DV, we keep a table of the distances from us (the node $s$) to every other node in the network. Starting with
+$c \left(s, v\right)$, for every neighbour $v$ of $s$, and $\infty$ to every other node that is \textbf{not} a neighbour
+of $s$. We also keep the predecessor to that destination, the node one before the destination node $v$, marked as $p_s
+\left(v\right)$. This predecessor node lets us compute the path to the desired node, by recursively building the path
+from the predecessor nodes, until we reach a node that is a neighbour. In actuality, we would not build the entire
+route, but rather make note of the neighbour that begins that route. When forwarding a packet to a destination, we
+simply send it to the neighbour. Each node then simply handles sending the packet to its neighbour. A set of of nodes,
+$N'$ is also kept, for which we definitely know the shortest paths from $s$, and in each step, we add a node to $N'$,
+and update the values of other nodes should the need arise. \\
+In general, the algorithm is as follows, for every node $s$: \begin{enumerate}
+    \item Initialisation: \begin{itemize}
+            \item Set \[
+                    D \left(v\right) = \begin{cases}
+                        c \left(s, v\right), &\text{ if }v \in \Gamma \left(s\right)\\
+                        \infty, &\text{ else } \\
+                    \end{cases}
+                \]
+            \item Set $N' = \left\{s\right\}$ and set $\forall v \in \Gamma \left(s\right),\ p \left(v\right) = s$
+        \end{itemize}
+    \item Loop while $N' \ne N$: \begin{itemize}
+        \item Find $w \notin N'$ such that $D \left(w\right)$ is minimised 
+        \item Add $w$ into $N'$
+        \item $\forall v \in \Gamma \left(w\right) : v \notin N'$, if $D \left(v\right) > D \left(w\right) + c \left(w,
+            v\right)$, then \begin{align*}
+                D \left(v\right) &= D \left(w\right) + c \left(w, v\right) \\ 
+                p \left(v\right) &= w
+            \end{align*}
+    \end{itemize}
+\end{enumerate}
 % subsection Link state (end)
 
+\subsection{Comparison and Real Life}\label{sub:comparison_and_real_life} % (fold)
+Both DV and LS algorithms are implemented, and used in real life. Routing Information Protocol (RIP) is a DV
+implementation, and Open Shortest Paths First (OSPF) is an LS implementation. DV is usually better for smaller networks,
+because it takes time to stabilise, which is not a problem in smaller networks. In larger networks, one should use LS.
+However, DS is a simpler protocol, that is easier for each router to run, so there is some desire to use it. \\ 
+
+RIP is based  on the hope count (the number of subnets in the path), and it updates every 30 seconds. If no update is
+received from a neighbour for 180 seconds, then it is marked as unreachable. OSPF is an LS implementation, where eac
+router broadcasts its LS, at least once every 30 minutes, and when a change in the topology is detected.
+% subsection Comparison and Real Life (end)
+
 % section How to route between L3 networks (end)
-
-\section{Interesting cases}\label{sec:interesting_cases} % (fold)
-
-% section Interesting cases (end)
 
 \end{document}
