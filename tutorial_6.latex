@@ -367,13 +367,13 @@ computer from the moment it’s connected to the network until the first respons
          2 & DHCP offer & DHCP server & DHCP server & broadcast & 255.255.255.255 \\ \hline
          3 & DHCP request & PC & 0.0.0.0 & broadcast & 255.255.255.255 \\ \hline
          4 & DHCP Ack (IP,DNS ...) & DHCP server & DHCP server & broadcast & 255.255.255.255 \\ \hline
-         5 & ARP request – DNS server & PC - & broadcast & - \\ \hline
-         6 & ARP response – DNS server & DNS server & - & PC & — \\ \hline
+         5 & ARP request – DNS server & PC - & broadcast & - & - \\ \hline
+         6 & ARP response – DNS server & DNS server & - & PC & - \\ \hline
          7 & DNS request – youtube.com & PC & PC & DNS server & DNS server \\ \hline
          8 & DNS response – youtube.com & DNS server & DNS server & PC & PC \\ \hline
          9 & ARP request – default gw & PC & - & broadcast & - \\ \hline
          10 & ARP response – default gw & Default gw & - & PC & - \\ \hline
-         11 & HTTP request & PC & PC Default gw & IP(youtube.com) \\ \hline
+         11 & HTTP request & PC & PC Default gw & IP(youtube.com) & - \\ \hline
          12 & HTTP response & Default gw & IP(youtube.com) & PC & PC \\ \hline
      \end{tabular}
      \caption{Solution}
@@ -434,6 +434,7 @@ Reminder, ARP responses are unicast. Describe all the transmitted messages, and 
 \begin{table}[H]
     \centering
     \begin{tabular}{|c|c|c|c|c|c|c|}
+        \hline
         \# & Message & SRC MAC & SRC IP & DST MAC & DST IP & LAN segment \\ \hline
         1 & ARP Request with IP(R0, 3) & MAC(a) & - & broadcast & - & A, B, C, X, Y, Z  \\ \hline
         2 & ARP Response with MAC(R0, 3) & MAC(R0, 3) & - & MAC(a) & - & A, X, Y \\ \hline
