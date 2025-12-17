@@ -154,7 +154,7 @@ weights. These are configured by the network operator (we will revisit this), an
 hop router (the next router in the path) to every IP subnet.
 
 We have 2 main routing schemes: \begin{itemize}
-    \item Link stae routing: Each router floods information to the network in order to learn the topology,
+    \item Link state routing: Each router floods information to the network in order to learn the topology,
         and then each router applies Dijkstra's algorithm to compute the shortest paths 
     \item Distance vector routing: This is an iterative process, that uses Bellman Ford (similar to STP)
 \end{itemize}
@@ -168,7 +168,7 @@ There are 2 ways to classify routing algorthms: \begin{itemize}
 \end{itemize}
 
 \subsubsection{Link state routing algorithm}\label{sec:link_state_routing_algorithm} % (fold)
-Here we will discuss Dijkstra's algorithm. In the netwrok topology, link costs are known to all nodes. This is
+Here we will discuss Dijkstra's algorithm. In the network topology, link costs are known to all nodes. This is
 accomplished via \textit{link state broadcast}. All the nodes have the same information. It computes the paths of the
 lowest cost from one node (the source), to all other nodes. This creates the forwarding table for that node. This is an
 iterative algorithm, where after $k$ iterations, we will know the lowest cost path to $k$ destinations.  \\ 
