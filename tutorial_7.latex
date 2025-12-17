@@ -1,0 +1,137 @@
+\documentclass[a4paper]{article}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{mathtools}
+\usepackage{blindtext}
+\usepackage{multicol}
+\usepackage{graphicx}
+\usepackage{placeins}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage[bookmarks=true]{hyperref}
+\usepackage{bookmark}
+\usepackage{bbm}
+\usepackage{wrapfig}
+\usepackage{tabularx}
+\usepackage[autostyle=true]{csquotes}
+\graphicspath{ {./images/} }
+\usepackage[bottom=0.5cm, right=1.5cm, left=1.5cm, top=1.5cm]{geometry}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{exercise}{Exercise}
+\newtheorem{example}{Example}
+\newtheorem{definition}{Definition}[section]
+
+\newcommand{\R}{\ensuremath{\mathbb{R}}}
+\newcommand{\N}{\ensuremath{\mathbb{N}}}
+\newcommand{\Z}{\ensuremath{\mathbb{Z}}}
+\newcommand{\p}{\ensuremath{\mathbb{P}}}
+\newcommand{\E}{\ensuremath{\mathbb{E}}}
+\newcommand{\F}{\ensuremath{\mathcal{F}}}
+\newcommand{\1}{\ensuremath{\mathbbm{1}}}
+\newcommand{\B}{\ensuremath{\mathbbm{B}}}
+
+\title{Tutorial 7}
+\author{Gidon Rosalki}
+\date{2025-12-11}
+
+
+\begin{document}
+\maketitle
+\noindent\textbf{Notice:} If you find any mistakes, please open an issue at \href{https://github.com/robomarvin1501/notes\_networking}{\texttt{https://github.com/robomarvin1501/notes\_networking}}
+\section{What is routing}\label{sec:what_is_routing} % (fold)
+We have spoken about DHCP, IP, DNS, and ARP, which all aid us in communicating in a LAN. Whenever we wanted to send
+information beyond the router that is located between our LAN, and the rest of the network, we have stated that this
+happens, but stopped at the router. Today, we will discuss what the router does.
+
+Routing is the process of selected a path for the traffic in a network, or between multiple networks. Sometimes packets
+must cross a few networks to reach the target network, so the relaying of a packet from one network interface to another
+is called \textit{forwarding}. 
+
+In order to route, we need to make a more abstract version of the network. Let us consider the network as a graph $G =
+\left(V, E\right)$. We can turn this into a weighted graph, to represent bandwidth, and so on, but this will not be
+discussed in this tutorial. We can then run graph based algorithms for finding the shortest path, such as Dijkstra, and
+Bellman Ford. These are abstracted into two routing algorithms, that then allow us to save the routes in the routing
+table. This effectively stores the cost of sending information from a local node, to any other destination in the
+network. 
+
+There are 2 different routing algorithms: \begin{itemize}
+    \item Distributed (decentralised): This uses a similar idea to STP, where each router computes a view of the network
+        on its own, and we hope that everything will converge.
+    \item Global: This assumes that every node knows the complete network topology
+\end{itemize}
+% section What is routing (end)
+
+\section{How to route between L3 networks}\label{sec:how_to_route_between_l_networks} % (fold)
+\subsection{Distance vector}\label{sub:distance_vector} % (fold)
+This is a distributed algorithm, based on Bellman Ford. The distance between a node $s$, to another node $y$ is given
+as: \[
+    D_s \left(y\right) = \displaystyle\min_{v \in \Gamma \left(s\right)} \left\{c \left(s, v\right) + D_v \left(y\right)\right\} 
+\]
+Where \begin{itemize}
+    \item $c \left(s, v\right)$ is the current value of the edge from $s$ to $v$
+    \item $D_V \left(y\right)$ is the currently known distance from $v$ to $y$, based on the table that $s$ has made 
+    \item $\Gamma \left(s\right)$ is the neighbours of node $s$
+\end{itemize}
+Every node in the network will compute a vector of distances to any other node in the network, using $\infty$ for
+distances that are unknown. The vector will continue updating until stabilisation. 
+
+The main idea (from the router's perspective): Each node keeps the DV of its neighbours, and if it gets an update from
+its neighbour, or one of its edges, it \begin{enumerate}
+    \item Updates the DV 
+    \item Distributed the updated DV to all neighbours
+\end{enumerate}
+This is repeated until there are no further changes in this router's DV. As we can see, this breaks into two sub
+sections: \begin{enumerate}
+    \item Initialisation: \begin{itemize}
+            \item Set the DV: \[
+                    D_s \left(v\right) = \begin{cases}
+                        c \left(s, v\right), &\text{ if }v \in \Gamma \left(s\right) \\
+                        \infty, &\text{ else } \\
+                    \end{cases}
+                \]
+            \item Set the neighbours DV: $\forall w \in \Gamma \left(s\right), \forall v \in V :\ D_w \left(v\right) =
+                \infty$
+            \item Send the DV to all neighbours
+        \end{itemize}
+    \item Update: \begin{itemize}
+            \item If some neighbour's DV, \textbf{or} one of hte edge's weights change: \[
+                    D_s \left(y\right) = \displaystyle\min_{v \in \Gamma \left(s\right)} \left\{c \left(s, v\right) +
+                    D_v \left(y\right)\right\} 
+                \]
+            \item Resend the DV if anything changed
+    \end{itemize}
+\end{enumerate}
+
+So, we build a distance table, with our immediate information about our neighbours, and then forward this to our
+neighbours, who update things accordingly. This keeps happening until everyone's tables have stabilised, at which point
+it is transferred into a forwarding table, and all will remain stable until the weights change. The changes can be
+negative (links disconnected, and the like) or even positive (a new link appears in the table).
+
+By doing examples (not shown here), one can see that after a positive change, where network weights are reduced, the
+algorithm will converge quickly to its stabilised state. However, when there is a negative change, then the routing loop
+of trying to compute the new distance vectors will continue for a long time, until the nodes establish that there is no
+shorter paths. \\ 
+This is called \textit{Count to Infinity}, and will continue until $c \left(a, b\right) + D_b \left(c\right) \geq c
+\left(a, c\right)$ (Here, $a, b$ are routers, and a link not to $a$ from $b$ has been updated negatively).  This can be
+solved with what is called \textit{poisoned reverse}. Given the nodes $a, b, c$, a path $a \to b \to c$, then $a$ can
+report in its DV to $b$ that its distance to $c$ is $\infty$. This means that $b$ will not try and reroute anything to
+$c$ through $a$, which is exactly the problem earlier that caused very slow stabilisation in the network updated with an
+increased weight. It should however be noted that poisoned reverse does not work in every situation, it will fail when
+there are loops longer than 2. 
+% subsection Distance vector (end)
+
+\subsection{Link state}\label{sub:link_state} % (fold)
+
+% subsection Link state (end)
+
+% section How to route between L3 networks (end)
+
+\section{Interesting cases}\label{sec:interesting_cases} % (fold)
+
+% section Interesting cases (end)
+
+\end{document}
