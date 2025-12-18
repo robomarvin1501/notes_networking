@@ -1,0 +1,111 @@
+\documentclass[a4paper]{article}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{mathtools}
+\usepackage{blindtext}
+\usepackage{multicol}
+\usepackage{graphicx}
+\usepackage{placeins}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage[bookmarks=true]{hyperref}
+\usepackage{bookmark}
+\usepackage{bbm}
+\usepackage{wrapfig}
+\usepackage{tabularx}
+\usepackage[autostyle=true]{csquotes}
+\graphicspath{ {./images/} }
+\usepackage[bottom=0.5cm, right=1.5cm, left=1.5cm, top=1.5cm]{geometry}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{exercise}{Exercise}
+\newtheorem{example}{Example}
+\newtheorem{definition}{Definition}[section]
+
+\newcommand{\R}{\ensuremath{\mathbb{R}}}
+\newcommand{\N}{\ensuremath{\mathbb{N}}}
+\newcommand{\Z}{\ensuremath{\mathbb{Z}}}
+\newcommand{\p}{\ensuremath{\mathbb{P}}}
+\newcommand{\E}{\ensuremath{\mathbb{E}}}
+\newcommand{\F}{\ensuremath{\mathcal{F}}}
+\newcommand{\1}{\ensuremath{\mathbbm{1}}}
+\newcommand{\B}{\ensuremath{\mathbbm{B}}}
+
+\title{Tutorial 8 - Traffic engineering}
+\author{Gidon Rosalki}
+\date{2025-12-18}
+
+
+\begin{document}
+\maketitle
+\noindent\textbf{Notice:} If you find any mistakes, please open an issue at \href{https://github.com/robomarvin1501/notes\_networking}{\texttt{https://github.com/robomarvin1501/notes\_networking}}
+
+\section{Introduction to Traffic Engineering}\label{sec:introduction_to_traffic_engineering} % (fold)
+Last tutorial we discussed the way to find the fastest route to a destination. However, we do not necessarily always
+want to send all the data through there, since that will increase the traffic, limiting how much information can be sent
+that way, resulting in slower transmission. We want to share the transmission across more possible routes in order to
+reduce network traffic. \\ 
+We do not normally touch this, networks usually mostly manage themselves. Routing protocols adapt to changes, in order
+to manage traffic. TCP (to be discussed in the future) can identify congestion, and adapt to reduce the traffic on a
+network. However, they do not do that as efficiently as we might have originally desired, TCP cannot send data over a
+less congested path if one exists. \\ 
+
+We want to monitor our resources (like bandwidth) in order to distribute load in ways that will reduce congestion,
+delay, and comply with application specific requirements. This can be achieved by fine tuning the routing protocol
+parameters, which are for the most part, the weights of the graph. This is not necessarily an easy problem. 
+% section Introduction to Traffic Engineering (end)
+
+\section{Modelling networks as linear programs}\label{sec:modelling_networks_as_linear_programs} % (fold)
+There are many scenarios where we can model our world using functions. This modelling can help us find solutions to
+problems in (hopefully) polynomial, or even linear time. We will return to linear programming, as discussed in
+algorithms. The standard form is for a given set of constraints $\left\{c_i\right\}_{i = 1} ^ {n}$, and constraints
+\begin{gather*}
+    \left\{a_{i, j}\right\}_{i, j = 1} ^ {m, n} \\
+    \left\{b_{i}\right\}_{i = 1} ^ {m} \\
+\end{gather*}
+Then we can maximise: \begin{gather*}
+    \displaystyle\max_{x} \left\{\displaystyle\sum_{j = 1}^{n}c_jx_j\right\}  \\ 
+    \text{Subject to } \displaystyle\sum_{j = 1}^{n}a_{ij} x_j \leq b_j\ i \in \left[m\right] \\ 
+    x_j \geq 0\ j \in \left[n\right]
+\end{gather*}
+We know from algorithms that every LP problem has another representation, which provides an upper bound for the original
+LP, and the solution for one defines the solution for the other (duality theorem): \begin{gather*}
+    \displaystyle\min_{y} \left\{\displaystyle\sum_{j = 1}^{n}c_jy_j\right\}  \\ 
+    \text{Subject to } \displaystyle\sum_{j = 1}^{n}a_{ij} y_i \geq c_j\ j \in \left[n\right] \\ 
+    y_i \geq 0\ i \in \left[m\right]
+\end{gather*}
+We also saw in algorithms the problem of MAX-FLOW, where for a given network, with a source node, and a destination
+(sink) node, find the maximum flow between the source and the sink.
+
+We will not be discussing MAX-FLOW here, but rather \textit{Multi-Commodity Flow}. This is because in a network, there
+are normally more than one set of active source, and destination pairs. We call the set of demands the \enquote{Demand
+Matrix}. \\ 
+So now we have a set of commodities $K$ where $K = \left\{K_i = \left(s_i, t_i, d_i\right)\right\}_{i = 1} ^ {n}$, and
+$f_i \left(u, v\right)$ which is the flow of the commodity $i$ on the edge $\left(u, v\right)$. Note that we allow every
+commodity to have its own demand (compared to just maximising the flow). The constraints become \begin{gather*}
+    \forall i, \forall v \in V \setminus \left\{s_i, t_i\right\} : \displaystyle\sum_{u : \left(u, v\right) \in E}^{}f_i
+    \left(u, v\right) = \displaystyle\sum_{w: \left(v, w\right) \in E}^{} f_i \left(v, w\right) \\ 
+    \forall \left(u, v\right) \in E : \displaystyle\sum_{u: \left(u, v\right) \in E}^{}f_i \left(u, v\right) \\ 
+    \forall i, \forall \left(u, v\right) \in E : f_i \left(u, v\right) \geq 0
+\end{gather*}
+
+We have many things that we can optimise. For example, we can maximise the total amount of sent traffic (i.e., maximise
+$\displaystyle\sum_{v}^{}\left|f_v\right|$, where $\left|f_v\right|$ is the total amount of traffic sent by $v$). We
+could also minimise congestion, where we minimise the load on the most congested edge (So maximise
+$\displaystyle\max_{e} \left\{\displaystyle\frac{f_e}{c_e}\right\} $ where $f_e$ is the flow along edge $e$). We could
+try and fairly allocate the resources, and even more, but those are less interesting to us right now. 
+
+% section Modelling networks as linear programs (end)
+
+\section{ECMP}\label{sec:ecmp} % (fold)
+
+% section ECMP (end)
+
+\section{Questions}\label{sec:questions} % (fold)
+
+% section Questions (end)
+
+\end{document}
