@@ -17,7 +17,7 @@
 \usepackage{wrapfig}
 \usepackage{tabularx}
 \usepackage{tikz}
-\usetikzlibrary{automata, positioning, arrows}
+\usetikzlibrary{automata, positioning, arrows, calc}
 \usepackage[autostyle=true]{csquotes}
 \graphicspath{ {./images/} }
 \usepackage[bottom=0.5cm, right=1.5cm, left=1.5cm, top=1.5cm]{geometry}
@@ -101,7 +101,7 @@ try and fairly allocate the resources, and even more, but those are less interes
 So, let us consider the case of maximising the total amount of traffic sent, maximum multi commodity flow, which we
 will call Max-MCF. We need to satisfy the capacity constraint, in that no edge can send more than its capacity. When
 solving the problem, we can decide how much traffic to send from each of the commodities (nodes). \\ 
-In MinConj-MCF we aim to minimise the load on the most congested edge. We need to send all the commodities, but this may
+In MinCong-MCF we aim to minimise the load on the most congested edge. We need to send all the commodities, but this may
 possibly exceed capacities. By using MCF we optimised routes from sources to destinations (according to some
 optimisation goal). Most times we want to use multiple (shortest) paths between hosts. So far, we assumed that we route
 on a \textbf{single} shortest path. This means that our routing mechanisms need to split traffic, which brings us on to
@@ -157,16 +157,21 @@ difficult, since it is unclear to define heavy, and to identify it.
 \section{Questions}\label{sec:questions} % (fold)
 \subsection{Definitions}\label{sub:definitions} % (fold)
 Consider the following network
-\begin{center} % TODO make the network
+\begin{center} 
     \begin{tikzpicture}[node distance=3cm]
         \node[state] (a) {A};
-        \node[state, right of=a] (B) {};
-        \node[state, right of=q1] (q2) {};
-        \node[state, right of=q2] (q3) {};
+        \node[state, right of=a] (b) {B};
+        \node[state, below of=b] (c) {C};
+        \node[state, below of=a] (d) {D};
+        \node[state] (e) at ($(a)!0.5!(c)$) {E};
 
-        \draw   (q0) edge[-, above] node{} (q1)
-                (q1) edge[-, above] node{} (q2)
-                (q2) edge[-, above] node{} (q3)
+        \draw   (a) edge[-, above] node{2} (b)
+                (b) edge[-, right] node{2} (c)
+                (c) edge[-, below] node{2} (d)
+                (d) edge[-, left] node{2} (a)
+                (a) edge[-, above right] node{2} (e)
+                (d) edge[-, above left] node{2} (e)
+                (c) edge[-, above right] node{2} (e)
                 ;
     \end{tikzpicture} \\
 \end{center}
@@ -174,7 +179,24 @@ Consider the following network
 The capacity of each edge is 2. The weight on each edge in OSPF (uses link state) is positive/infinite On each edge,
 every sub-flow can be in either direction, and the total flow is the sum of all the sub-flows.
 
-% TODO 27 - 29
+We will create the following notations: \begin{itemize}
+    \item $Max-MCF_{OSPF/ECMP}$ is the maximisation problem of the total network flow, when using OSPF and ECMP,
+        without restricting each flow to a single path 
+    \item $Max-MCF_{OPT}$ is the maximisation problem of the total network flow without restricting each flow to a
+        single path, and without restricting us to equal division, any division is possible between nodes that are part
+        of the shortest path
+\end{itemize}
+Similarly: \begin{itemize}
+    \item $MinCong-MCF_{OSPF/ECMP}$ is the minimisation problem of the maximal congestion (over an edge), when using
+        OSPF and ECMP, without restricting each flow to a single path 
+    \item $MinCong-MCF_{OPT}$ is the minimisation problem of the maximal congestion without restricting each flow to a
+        single path, and without restricting us to equal division, any division is possible between nodes that are part
+        of the shortest path
+\end{itemize}
+
+Recall that in both MinCong-MCF problems, \textbf{all} commodities must be sent, even if one surpasses the edge
+capacities, and in Max-MCF, the solution is restricted such that the edges capacities are not surpassed.
+
 % subsection Definitions (end)
 
 \subsection{Question 1}\label{sub:question_} % (fold)
@@ -185,6 +207,24 @@ Assume that there are two commodities (source, destination, demand): \begin{gath
 What is the optimal solution of $Max-MCF_{OPT}$? \\ 
 
 \subsubsection{Solution}\label{sec:solution} % (fold)
+\begin{center} 
+    \begin{tikzpicture}[node distance=3cm]
+        \node[state] (a) {A};
+        \node[state, right of=a] (b) {B};
+        \node[state, below of=b] (c) {C};
+        \node[state, below of=a] (d) {D};
+        \node[state] (e) at ($(a)!0.5!(c)$) {E};
+
+        \draw   (a) edge[->, above] node{2} (b)
+                (b) edge[->, right] node{2} (c)
+                (c) edge[<-, below] node{2} (d)
+                (d) edge[<-, left] node{2} (a)
+                (a) edge[->, above right] node{2} (e)
+                (d) edge[->, above left] node{2} (e)
+                (c) edge[->, above right] node{2} (e)
+                ;
+    \end{tikzpicture} \\
+\end{center}
 The optimal solution is $6$, A sends 4 units, and C sends 2. Let us assume by contradiction that there is a better
 solution $s' > 6$. Let us now consider node C, for whom all the edges are saturated. Since C is in both commodities,
 then in $s'$, the flow on one of the edges connected to C will increase, which violates the capacity constraints.
@@ -197,7 +237,24 @@ from the previous question?
 
 \subsubsection{Solution}\label{sec:solution} % (fold)
 Such an assignment exists, and is shown below: 
-% TODO 33
+\begin{center} 
+    \begin{tikzpicture}[node distance=3cm]
+        \node[state] (a) {A};
+        \node[state, right of=a] (b) {B};
+        \node[state, below of=b] (c) {C};
+        \node[state, below of=a] (d) {D};
+        \node[state] (e) at ($(a)!0.5!(c)$) {E};
+
+        \draw   (a) edge[-, above] node{1} (b)
+                (b) edge[-, right] node{1} (c)
+                (c) edge[-, below] node{1} (d)
+                (d) edge[-, left] node{1} (a)
+                (a) edge[-, above right] node{$\infty$} (e)
+                (d) edge[-, above left] node{$\infty$} (e)
+                (c) edge[-, above right] node{1} (e)
+                ;
+    \end{tikzpicture} \\
+\end{center}
 So, the packets from A to C will be equally routed through B and D, and packets from C to E will be routed directly.
 Solving this optimisation problem will (in this case) then imply the same flows as in the solution to $Max-MCF_{OPT}$
 % subsubsection Solution (end)
@@ -219,7 +276,65 @@ the minimal load on this cut. The total commodities sun to 8 units, and the cut 
 units. Therefore, the minimal maximum load is $\displaystyle\frac{8}{6} = \displaystyle\frac{4}{3}$. So, we want a
 maximum of $\displaystyle\frac{f}{c} = \displaystyle\frac{4}{3} \implies f = \displaystyle\frac{8}{3}$ for each edge. 
 
-% TODO 36
+Here is a possible solution. Firstly, the flow for $\left(B, D, 5\right)$:
+\begin{center} 
+    \begin{tikzpicture}[node distance=3cm]
+        \node[state] (a) {A};
+        \node[state, right of=a] (b) {B};
+        \node[state, below of=b] (c) {C};
+        \node[state, below of=a] (d) {D};
+        \node[state] (e) at ($(a)!0.5!(c)$) {E};
+
+        \draw   (a) edge[<-, above] node{$2 \frac{2}{3}$} (b)
+                (b) edge[->, right] node{$2 \frac{1}{3}$} (c)
+                (c) edge[->, below] node{$2 \frac{1}{3}$} (d)
+                (d) edge[->, left] node{$2 \frac{2}{3}$} (a)
+                (a) edge[-, above right] node{2} (e)
+                (d) edge[-, above left] node{2} (e)
+                (c) edge[-, above right] node{2} (e)
+                ;
+    \end{tikzpicture} \\
+\end{center}
+
+Now the flow for $\left(C, E, 3\right)$:
+\begin{center} 
+    \begin{tikzpicture}[node distance=3cm]
+        \node[state] (a) {A};
+        \node[state, right of=a] (b) {B};
+        \node[state, below of=b] (c) {C};
+        \node[state, below of=a] (d) {D};
+        \node[state] (e) at ($(a)!0.5!(c)$) {E};
+
+        \draw   (a) edge[-, above] node{2} (b)
+                (b) edge[-, right] node{2} (c)
+                (c) edge[->, below] node{$\frac{1}{3}$} (d)
+                (d) edge[-, left] node{2} (a)
+                (a) edge[-, above right] node{2} (e)
+                (d) edge[->, above left] node{$\frac{1}{3}$} (e)
+                (c) edge[->, above right] node{$2 \frac{2}{3}$} (e)
+                ;
+    \end{tikzpicture} \\
+\end{center}
+
+Resulting in an overall flow of:
+\begin{center} 
+    \begin{tikzpicture}[node distance=3cm]
+        \node[state] (a) {A};
+        \node[state, right of=a] (b) {B};
+        \node[state, below of=b] (c) {C};
+        \node[state, below of=a] (d) {D};
+        \node[state] (e) at ($(a)!0.5!(c)$) {E};
+
+        \draw   (a) edge[<-, above] node{$2 \frac{2}{3}$} (b)
+                (b) edge[->, right] node{$2 \frac{1}{3}$} (c)
+                (c) edge[->, below] node{$2 \frac{2}{3}$} (d)
+                (d) edge[->, left] node{$2 \frac{2}{3}$} (a)
+                (a) edge[-, above right] node{2} (e)
+                (d) edge[->, above left] node{$\frac{1}{3}$} (e)
+                (c) edge[->, above right] node{$2 \frac{2}{3}$} (e)
+                ;
+    \end{tikzpicture} \\
+\end{center}
 % subsubsection Solution (end)
 % subsection Question 3 (end)
 
@@ -242,7 +357,23 @@ There, the edges will have the loads: \begin{gather}
 % subsection Question 4 (end)
 
 \subsection{Question 5}\label{sub:question_} % (fold)
-% TODO 38 - 40
+Is there a feasible assignment of edge weights such that the solution for $MinCong-MCF_{OSPF/ECMP}$ yields the optimal
+solution from question 3, which had the maximum load of $\displaystyle\frac{4}{3}$? If there is such an assignment, show
+it and explain why it yields the result, and if there is not such an assignment, then explain why.
+
+\subsubsection{Solution}\label{sec:solution} % (fold)
+There is no such assignment. We will assume by contradiction that such an assignment exists. In ECMP, if a node routes a
+flow to multiple neighbours, then the flow is split equally between them. Consider the node B: \begin{itemize}
+    \item If B routes all 5 units over one edge, then the load on said edge will be $\displaystyle\frac{5}{2} >
+        \displaystyle\frac{4}{3}$ - obviously worse than the optimal solution in question 3
+    \item If $B$ routes all 5 units over its two edges, then the total outgoing flows from C will be $3 + 2.5$.
+        Considering C, the minimal load on its edges will be where it routes over both $\left(C, E\right)$ and $\left(C,
+        D\right)$, and the load on the edges will be $\displaystyle\frac{5.4}{4} > \displaystyle\frac{4}{3}$, so once
+        again, worse than the optimal solution from question 3
+\end{itemize}
+We may perform a similar analysis starting on node C which shows that C will not send on $\left(C, B\right)$, and
+conclude the answer.
+% subsubsection Solution (end)
 % subsection Question 5 (end)
 
 \subsection{Question 6}\label{sub:question_} % (fold)
@@ -253,7 +384,42 @@ for $Min-Cong_{OSPF/ECMP}$ yields the optimal solution from question 3 (maximal 
 \subsubsection{Solution}\label{sec:solution} % (fold)
 Such an assignment exists. The idea is to assign weights that will enable such a solution. For example, consider a
 possible solution (that yields the optimal maximal load) from question 3: 
-% TODO 42
+\begin{center} 
+    \begin{tikzpicture}[node distance=3cm]
+        \node[state] (a) {A};
+        \node[state, right of=a] (b) {B};
+        \node[state, below of=b] (c) {C};
+        \node[state, below of=a] (d) {D};
+        \node[state] (e) at ($(a)!0.5!(c)$) {E};
+
+        \draw   (a) edge[<-, above] node{$2 \frac{2}{3}$} (b)
+                (b) edge[->, right] node{$2 \frac{1}{3}$} (c)
+                (c) edge[->, below] node{$2 \frac{2}{3}$} (d)
+                (d) edge[->, left] node{$2 \frac{2}{3}$} (a)
+                (d) edge[->, above left] node{$\frac{1}{3}$} (e)
+                (c) edge[->, above right] node{$2 \frac{2}{3}$} (e)
+                ;
+    \end{tikzpicture} \\
+\end{center}
+We can use the following weights assignment to yield this solution: 
+\begin{center} 
+    \begin{tikzpicture}[node distance=3cm]
+        \node[state] (a) {A};
+        \node[state, right of=a] (b) {B};
+        \node[state, below of=b] (c) {C};
+        \node[state, below of=a] (d) {D};
+        \node[state] (e) at ($(a)!0.5!(c)$) {E};
+
+        \draw   (a) edge[<-, above] node{1} (b)
+                (b) edge[->, right] node{1} (c)
+                (c) edge[->, below] node{1} (d)
+                (d) edge[->, left] node{1} (a)
+                (a) edge[-, above right] node{$\infty$} (e)
+                (d) edge[->, above left] node{1} (e)
+                (c) edge[->, above right] node{2} (e)
+                ;
+    \end{tikzpicture} \\
+\end{center}
 
 % subsubsection Solution (end)
 % subsection Question 6 (end)
