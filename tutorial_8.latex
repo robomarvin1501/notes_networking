@@ -16,6 +16,8 @@
 \usepackage{bbm}
 \usepackage{wrapfig}
 \usepackage{tabularx}
+\usepackage{tikz}
+\usetikzlibrary{automata, positioning, arrows}
 \usepackage[autostyle=true]{csquotes}
 \graphicspath{ {./images/} }
 \usepackage[bottom=0.5cm, right=1.5cm, left=1.5cm, top=1.5cm]{geometry}
@@ -91,21 +93,170 @@ commodity to have its own demand (compared to just maximising the flow). The con
     \forall \left(u, v\right) \in E : \displaystyle\sum_{u: \left(u, v\right) \in E}^{}f_i \left(u, v\right) \\ 
     \forall i, \forall \left(u, v\right) \in E : f_i \left(u, v\right) \geq 0
 \end{gather*}
-
 We have many things that we can optimise. For example, we can maximise the total amount of sent traffic (i.e., maximise
 $\displaystyle\sum_{v}^{}\left|f_v\right|$, where $\left|f_v\right|$ is the total amount of traffic sent by $v$). We
 could also minimise congestion, where we minimise the load on the most congested edge (So maximise
 $\displaystyle\max_{e} \left\{\displaystyle\frac{f_e}{c_e}\right\} $ where $f_e$ is the flow along edge $e$). We could
-try and fairly allocate the resources, and even more, but those are less interesting to us right now. 
+try and fairly allocate the resources, and even more, but those are less interesting to us right now. \\ 
+So, let us consider the case of maximising the total amount of traffic sent, maximum multi commodity flow, which we
+will call Max-MCF. We need to satisfy the capacity constraint, in that no edge can send more than its capacity. When
+solving the problem, we can decide how much traffic to send from each of the commodities (nodes). \\ 
+In MinConj-MCF we aim to minimise the load on the most congested edge. We need to send all the commodities, but this may
+possibly exceed capacities. By using MCF we optimised routes from sources to destinations (according to some
+optimisation goal). Most times we want to use multiple (shortest) paths between hosts. So far, we assumed that we route
+on a \textbf{single} shortest path. This means that our routing mechanisms need to split traffic, which brings us on to
+ECMP.
 
 % section Modelling networks as linear programs (end)
 
 \section{ECMP}\label{sec:ecmp} % (fold)
+ECMP is Equal Cost Multi Path. We want routers to route on all shortest paths between a source/destination pair. Each
+router keeps a set of next hops along shortest paths to a destination (i.e., the first node from the current node, on
+the shortest path to the destination node). Will \enquote{split} traffic evenly along those next hops (routers). 
 
+\subsection{Optimising}\label{sub:optimising} % (fold)
+We want to set the graphs weights so that ECMP would be the optimal solution, with respect to some optimization goal.
+For example: minimising the most congested link but allowing total flow to exceed the link capacity. There are not
+always link weights such that ECMP are optimal, but we can create link weights such that ECMP will hopefully approach
+the optimal solution. 
+Consider the following graph: 
+\begin{figure}[H]
+    \center
+    \includegraphics[scale=0.2]{tutorial_8_ECMP_optimisation_problem.png}
+\end{figure}
+Here we want to send $n$ units of flow from $s$ to $t$. This can be achieved by sending 1 along their direct link, and
+sending $n - 1$ to the next node. This node can then send 1 along its direct link, and $n - 2$ to the next node. This
+can keep happening until $n$ units have been sent from $s$ to $t$
+
+Finding the optimal weights under the constraints of using ECMP and weights is a problem that is NP-hard. Even finding
+an approximation for the min-congestion flow with \textit{any} constant factor is NP-hard. This is even true for a
+single source-destination pair. So instead of solutions, we are left with heuristics. We are not going to learn the
+heuristics properly, but will learn the simplest which is equally splitting among the available paths.
+
+So, we need to establish how we know how to split. One method is to simply go over all the next hops from this node, in
+a \enquote{round robin} fashion. This has the problem that it could lead to a reordering of the packets, due to each of
+the hops having a different round trip time. So, we will add the constraint that we want all the packets of the same
+\textit{flow} to have the same \textit{path}.
+% subsection Optimising (end)
+
+\subsection{ECMP Hashing}\label{sub:ecmp_hashing} % (fold)
+We would like all packets of the same flow to traverse the same path. To do this, we will use modulo $N$ hash, where $N$
+is the number of next hops for the destination. The hash table maps between a flow and the next hop (router). There
+exists many hash functions one can use, and in practice, we don’t know which hash functions vendors use. 
+
+So, in order to hash, we use information from the packet header. This includes the source IP address, and port number,
+destination IP address and port number, and the protocol in use. These comprise the ECMP 5-tuple. This way, each packet
+of the same flow will have these same 5 values. 
+
+This does have some problems. Multiple \enquote{heavy} flows in the network, which share the same link, can result in
+poor performance. One could say that one needs to distribute the \enquote{heavy} flows differently, but this is
+difficult, since it is unclear to define heavy, and to identify it.
+% subsection ECMP Hashing (end)
 % section ECMP (end)
 
 \section{Questions}\label{sec:questions} % (fold)
+\subsection{Definitions}\label{sub:definitions} % (fold)
+Consider the following network
+\begin{center} % TODO make the network
+    \begin{tikzpicture}[node distance=3cm]
+        \node[state] (a) {A};
+        \node[state, right of=a] (B) {};
+        \node[state, right of=q1] (q2) {};
+        \node[state, right of=q2] (q3) {};
 
+        \draw   (q0) edge[-, above] node{} (q1)
+                (q1) edge[-, above] node{} (q2)
+                (q2) edge[-, above] node{} (q3)
+                ;
+    \end{tikzpicture} \\
+\end{center}
+
+The capacity of each edge is 2. The weight on each edge in OSPF (uses link state) is positive/infinite On each edge,
+every sub-flow can be in either direction, and the total flow is the sum of all the sub-flows.
+
+% TODO 27 - 29
+% subsection Definitions (end)
+
+\subsection{Question 1}\label{sub:question_} % (fold)
+Assume that there are two commodities (source, destination, demand): \begin{gather*}
+    \left(A, C, 5\right) \\
+    \left(C, E, 3\right) \\
+\end{gather*}
+What is the optimal solution of $Max-MCF_{OPT}$? \\ 
+
+\subsubsection{Solution}\label{sec:solution} % (fold)
+The optimal solution is $6$, A sends 4 units, and C sends 2. Let us assume by contradiction that there is a better
+solution $s' > 6$. Let us now consider node C, for whom all the edges are saturated. Since C is in both commodities,
+then in $s'$, the flow on one of the edges connected to C will increase, which violates the capacity constraints.
+% subsubsection Solution (end)
+% subsection Question 1 (end)
+
+\subsection{Question 2}\label{sub:question_} % (fold)
+Is there a feasible assignment of edges weights s.t. the solution to $Max-MCF_{OSPF/ECMP}$ yields the optimal solution
+from the previous question? 
+
+\subsubsection{Solution}\label{sec:solution} % (fold)
+Such an assignment exists, and is shown below: 
+% TODO 33
+So, the packets from A to C will be equally routed through B and D, and packets from C to E will be routed directly.
+Solving this optimisation problem will (in this case) then imply the same flows as in the solution to $Max-MCF_{OPT}$
+% subsubsection Solution (end)
+% subsection Question 2 (end)
+
+\subsection{Question 3}\label{sub:question_} % (fold)
+Consider the following commodities: \begin{gather}
+    \left(B, D, 5\right) \\ 
+    \left(C, E, 3\right) \\ 
+\end{gather}
+
+What's the optimal solution for the $Max-MCF_{OPT}$ problem in this scenario? Show a flow that achieves that solution,
+and explain your answer.
+
+\subsubsection{Solution}\label{sec:solution} % (fold)
+Let us analyse the maximum load by looking at the cut $\left(C, C \setminus \left\{B, C\right\}\right)$. We will note
+that \textbf{all} the commodities must flow through this cut. Therefore, the minimal maximum load is lower bounded by
+the minimal load on this cut. The total commodities sun to 8 units, and the cut has 3 edges, with a total capacity of 6
+units. Therefore, the minimal maximum load is $\displaystyle\frac{8}{6} = \displaystyle\frac{4}{3}$. So, we want a
+maximum of $\displaystyle\frac{f}{c} = \displaystyle\frac{4}{3} \implies f = \displaystyle\frac{8}{3}$ for each edge. 
+
+% TODO 36
+% subsubsection Solution (end)
+% subsection Question 3 (end)
+
+\subsection{Question 4}\label{sub:question_} % (fold)
+Suggest the weights assignment such that the solution to $Min-Cong_{OSPF/ECMP}$ (the maximum load) is 1.5. Explain your
+answer. This is for the following commodities: \begin{gather}
+    \left(B, D, 5\right) \\ 
+    \left(C, E, 3\right) \\ 
+\end{gather}
+
+\subsubsection{Solution}\label{sec:solution} % (fold)
+The maximum must be 3, since \[
+    \displaystyle\frac{f}{c} = \displaystyle\frac{f}{2} = 1.5 \implies f = 3
+\]
+There, the edges will have the loads: \begin{gather}
+    \left(A, B\right), \left(A, D\right), \left(B, C\right), \left(C, D\right): \displaystyle\frac{2.5}{2} \\ 
+    \left(C, E\right) : \displaystyle\frac{3}{2}
+\end{gather}
+% subsubsection Solution (end)
+% subsection Question 4 (end)
+
+\subsection{Question 5}\label{sub:question_} % (fold)
+% TODO 38 - 40
+% subsection Question 5 (end)
+
+\subsection{Question 6}\label{sub:question_} % (fold)
+Now consider a modified version of OSPF/ECMP, in which flows can be unequally divided between neighbours with shortest
+paths. Is there now a feasible assignment of edges weights such that the solution
+for $Min-Cong_{OSPF/ECMP}$ yields the optimal solution from question 3 (maximal load= $\displaystyle\frac{4}{3}$ )? 
+
+\subsubsection{Solution}\label{sec:solution} % (fold)
+Such an assignment exists. The idea is to assign weights that will enable such a solution. For example, consider a
+possible solution (that yields the optimal maximal load) from question 3: 
+% TODO 42
+
+% subsubsection Solution (end)
+% subsection Question 6 (end)
 % section Questions (end)
 
 \end{document}
