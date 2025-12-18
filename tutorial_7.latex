@@ -166,8 +166,8 @@ implementation, and Open Shortest Paths First (OSPF) is an LS implementation. DV
 because it takes time to stabilise, which is not a problem in smaller networks. In larger networks, one should use LS.
 However, DS is a simpler protocol, that is easier for each router to run, so there is some desire to use it. \\ 
 
-RIP is based  on the hope count (the number of subnets in the path), and it updates every 30 seconds. If no update is
-received from a neighbour for 180 seconds, then it is marked as unreachable. OSPF is an LS implementation, where eac
+RIP is based on the hop count (the number of subnets in the path), and it updates every 30 seconds. If no update is
+received from a neighbour for 180 seconds, then it is marked as unreachable. OSPF is an LS implementation, where each
 router broadcasts its LS, at least once every 30 minutes, and when a change in the topology is detected.
 % subsection Comparison and Real Life (end)
 
