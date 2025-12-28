@@ -1,0 +1,84 @@
+\documentclass[a4paper]{article}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{mathtools}
+\usepackage{blindtext}
+\usepackage{multicol}
+\usepackage{graphicx}
+\usepackage{placeins}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage[bookmarks=true]{hyperref}
+\usepackage{bookmark}
+\usepackage{bbm}
+\usepackage{wrapfig}
+\usepackage{tabularx}
+\usepackage[autostyle=true]{csquotes}
+\graphicspath{ {./images/} }
+\usepackage[bottom=0.5cm, right=1.5cm, left=1.5cm, top=1.5cm]{geometry}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{exercise}{Exercise}
+\newtheorem{example}{Example}
+\newtheorem{definition}{Definition}[section]
+
+\newcommand{\R}{\ensuremath{\mathbb{R}}}
+\newcommand{\N}{\ensuremath{\mathbb{N}}}
+\newcommand{\Z}{\ensuremath{\mathbb{Z}}}
+\newcommand{\p}{\ensuremath{\mathbb{P}}}
+\newcommand{\E}{\ensuremath{\mathbb{E}}}
+\newcommand{\F}{\ensuremath{\mathcal{F}}}
+\newcommand{\1}{\ensuremath{\mathbbm{1}}}
+\newcommand{\B}{\ensuremath{\mathbbm{B}}}
+
+\title{Lecture 10}
+\author{Gidon Rosalki}
+\date{2025-12-28}
+
+
+\begin{document}
+\maketitle
+\noindent\textbf{Notice:} If you find any mistakes, please open an issue at \href{https://github.com/robomarvin1501/notes\_networking}{\texttt{https://github.com/robomarvin1501/notes\_networking}}
+\section{Recap - Traffic management}\label{sec:recap_traffic_management} % (fold)
+We covered traffic engineering in the network layer (L3). We can also perform congestion control in the transport layer
+(L4), through carefully engineering the protocols. It is at this layer that concepts such as TCP, and UDP appear.
+% section Recap - Traffic management (end)
+
+\section{Transport layer}\label{sec:transport_layer} % (fold)
+The purpose of transport services, and protocols is to provide \textit{logical communication} between app processes
+running on different hosts. Transport protocols run in the end systems, the nodes on the network, rather than purely on
+the switches, or routers. On the sending side, the node breaks app messages into segments which it passes to the nwework
+layer, and the receiver reassembles segments received in the network layer back into messages for the application layer.
+There is more than 1 transport protocol available to applications: UDP and TCP. \\ 
+TCP provides reliable, in order delivery. It includes congestion control, flow control, and setting up / closing
+connections. It ensures that when a message is sent, all of its packets will arrive at the destination host, in order.
+In contrast, UDP guarantees nothing, it is a minimal, no frills extension of IP. \\ 
+Consider UDP to be shouting into the void. The recipient might hear, but it is not guaranteed, and if they do hear, it
+is possible that they will hear your words out of order, due to strange echoes. In contrast, TCP involves numbering
+every word you say, verifying that the recipient is ready to receive each word, and that they have heard each word every
+time. From this, we can intuitively see that TCP is slower than UDP. However, when one wants to receive a webpage, for
+example, the speed of download with a difference of potentially milliseconds is not relevant, but what is relevant is
+that the words on the webpage appear in the right order, and are all received. 
+
+\subsection{Multiplexing}\label{sub:multiplexing} % (fold)
+The transport layer also allows multiplexing messages on a single wire. We may have more than one application
+communication between two hosts, A and B, over the same wire. To enable this, we have the socket abstraction of the
+transport layer. Sockets are abstractions of IP addresses, combined with ports. Ports numbered from 0 to 65535 (16 bit
+number). The socket of the packet is part of the header in TCP / UDP messages. Each application sends / receives
+messages on a single socket, and this way the OS can separate messages that have been received from a single wire, and a
+single host to different applications on the computer. 
+
+Demultiplexing works as follows. When the host receives IP datagrams, each datagram has in its header the source IP
+address, and the destination IP address. Each datagram is responsible for 1 transport layer segment, and each segment
+has a source port number, and a destination port number. The host uses IP addresses, and port number to direct segments
+to the appropriate sockets.
+% subsection Multiplexing (end)
+
+
+
+% section Transport layer (end)
+
+\end{document}
