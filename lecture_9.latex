@@ -304,6 +304,14 @@ to the ECMP flow that is \enquote{closest} to a specific objective function. Tur
 even for simple objective functions. As a result, network operators use (non optimal, but sufficiently good in some real
 life environments) heuristics.
 
+Let us now discuss the implementation, how ECMP splits traffic evenly between its next hops. Recall hash functions,
+which map a large datum into a small datum. This small datum can be an integer, which indexes an array. This may be
+expressed mathematically as mapping $n$ bit data into $k$ buckets, where $k \ll 2 ^ {n}$. This provides time and space
+saving data structures for when we want to look up data. We aim for this mapping to be a low cost, deterministic, and
+uniform method of spreading out keys across hashes. Naturally, from the pidgeonhole principle, there will be at least 1
+pair of keys that map to the same bucket. This was resolved in the data structures course. \\ 
+We select paths by hashing the source, and the destination addresses, which returns a number in the range of the number
+of links attached. This chooses, deterministically a link on which to send data. 
 % subsubsection ECMP (end)
 
 % subsection Traffic management (end)
