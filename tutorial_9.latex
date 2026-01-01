@@ -1,0 +1,215 @@
+\documentclass[a4paper]{article}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{mathtools}
+\usepackage{blindtext}
+\usepackage{multicol}
+\usepackage{graphicx}
+\usepackage{placeins}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage[bookmarks=true]{hyperref}
+\usepackage{bookmark}
+\usepackage{bbm}
+\usepackage{wrapfig}
+\usepackage{tabularx}
+\usepackage[autostyle=true]{csquotes}
+\graphicspath{ {./images/} }
+\usepackage[bottom=0.5cm, right=1.5cm, left=1.5cm, top=1.5cm]{geometry}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{exercise}{Exercise}
+\newtheorem{example}{Example}
+\newtheorem{definition}{Definition}[section]
+
+\newcommand{\R}{\ensuremath{\mathbb{R}}}
+\newcommand{\N}{\ensuremath{\mathbb{N}}}
+\newcommand{\Z}{\ensuremath{\mathbb{Z}}}
+\newcommand{\p}{\ensuremath{\mathbb{P}}}
+\newcommand{\E}{\ensuremath{\mathbb{E}}}
+\newcommand{\F}{\ensuremath{\mathcal{F}}}
+\newcommand{\1}{\ensuremath{\mathbbm{1}}}
+\newcommand{\B}{\ensuremath{\mathbbm{B}}}
+
+\title{Tutorial 9 - Reliable Transport Protocols}
+\author{Gidon Rosalki}
+\date{2026-01-01}
+
+
+\begin{document}
+\maketitle
+\noindent\textbf{Notice:} If you find any mistakes, please open an issue at \href{https://github.com/robomarvin1501/notes\_networking}{\texttt{https://github.com/robomarvin1501/notes\_networking}}
+\section{Reliable Transport}\label{sec:reliable_transport} % (fold)
+The concept is to provide the upper layer a service abstraction of a reliable channel, where no bits are corrupted or
+lost, and all bits are delivered in order. In order for this to hold, we need to make the network reliable, and ensure
+reliable communication over an unreliable / noisy channel. This naturally has costs, and other requirements, which will
+be discussed. 
+
+\section{First attempt}\label{sec:first_attempt} % (fold)
+In order for the network to be reliable, we could add the feature that when a packet is seen by a switch, we check that
+it reaches the next hop without corruptions, and if it is corrupted, then we resend. This has a few questions, what if 2
+switches fail? Where must we buffer packets, and for how long? What is the resultant goodput, throughput, and packet
+delay? Since the network is unreliable, the packets may be delayed, lost, or corrupted. We thus need a mechanism to
+monitor any of these. \\ 
+% section First attempt (end)
+
+For the purposes of today, we are going to assume that we can always detect errors, that each sender always has packets
+to transmit, and packets are received in the order in which they are sent, without bypassing.
+% section Reliable transport (end)
+
+
+\section{Stop and Wait}\label{sec:stop_and_wait} % (fold)
+This is split into two sides, the sender, and receiver. \\ 
+The \textbf{sender} sends a packet, adn starts a timer. It waits for $T_{out}$ (timeout) units, to receive an ACK / NACK
+response. If it receives NACK (not acknowledged), or the timeout is reached, then it resends, and resets the timer. If
+it receives ACK, then it sends the next packet, and resets the timeout. \\ 
+The \textbf{receiver} will send an ACK if it receives a packet, without an error, and NACK (or ignore) if the packet is
+corrupted. For our purposes, we will probably ignore NACKs, since it only mildly improves the speeds offered by the
+sender, letting the sender reach timeout is just as effective. 
+
+This is not quite sufficient, since the receiver cannot distinguish between a new message, and a resent message. We can
+try and resolve this, by adding a binary counter in the sent packets. \\
+This is also not sufficient, since now the sender does not know which packet was ACKed. To resolve this, we also add a
+binary counter in the ACKs sent by the receiver. 
+
+The timer is initialised after sending the last bit of the packet, but we need to decide what is the minimal timeout
+$T_{out}$ needed for this protocol to work. We need to consider: \begin{itemize}
+    \item Packet siize 
+    \item ACK / NACK size 
+    \item Transmission rate (bandwidth)
+    \item Distance between stations
+    \item Propagation speed
+    \item Processing time ($T_{pt}$) (unless told otherwise, only the receiver can have $T_{pt}>0$)
+\end{itemize}
+In order to calculate the timout, we will first note that we only care about the time from the last sent bit, and the
+\textit{worst} case ACK / packet size. 
+\begin{figure}[H]
+    \center
+    \includegraphics[scale=0.2]{tutorial_9_timeout_size.png}
+    \caption{Timeout size}
+\end{figure}
+So we can see that \[T_{out} \geq 2T_{prop} + T_{ack} + T_{pt}\] 
+
+\begin{example}[]
+    Let:
+    \begin{itemize}
+        \item Packet size: 2000 bit
+        \item ACK/NACK size: 200 bit
+        \item Transmission rate (BW): 10 Kbps
+        \item Distance between stations: 1000 km
+        \item Propagation speed: 2 · 108m/s
+        \item Processing time (Tpt ): 0 sec
+        \item What is the minimal timeout, needed for this protocol?
+    \end{itemize}
+
+    \begin{proof}[Solution]
+        We will note that the propagation speed is \begin{align*}
+            T_{prop} &= \displaystyle\frac{\text{distance}}{\text{propagation speed}} \\ 
+                     &= \displaystyle\frac{10 ^ {6}m}{2 \cdot 10 ^ {8}\frac{m}{s}} \\ 
+                     &= 5 \cdot 10 ^ {-3}s
+        \end{align*}
+
+        The ACK time is \begin{align*}
+            T_{ack} &= \displaystyle\frac{\text{ACK size}}{\text{Transmission rate}} \\ 
+                    &= \displaystyle\frac{200 bits}{10 ^ {4} \frac{b}{s}} \\ 
+                    &= 2 \cdot 10 ^ {-2}s
+        \end{align*}
+
+        So \begin{align*}
+            T_{prop} &= 5 \cdot 10 ^ {-3}s \\ 
+            T_{ack} &= 2 \cdot 10 ^ {-2}s \\ 
+            T_{pt} &= 0 \\ 
+            T_{out} &\geq 2T_{prop} + T_{ack} + T_{pt}  \\ 
+                    &= 2 \cdot 5 \cdot 10 ^ {-3} + 2 \cdot 10 ^ {-2} + 0 \\ 
+                    &= 3 \cdot 10 ^ {-2} s
+        \end{align*}
+
+    \end{proof}
+\end{example}
+
+Let us now consider the goodput. Let us assume that we use the whole bandwidth, and on failure, the receiver does not
+send NACK, but just ignores teh packet. Packets /ACKs fail with probability \[
+    p \implies X \sim Geo \left(\left(1 - p\right) ^ {2}\right)
+\]
+The expected number of tries until success (i.e. all attempts except the last fail): \[
+    \E \left[X\right] = \displaystyle\frac{1}{\left(1 - p\right) ^ {2}}
+\]
+The goodput is the ratio of effective transmission time, and total transmission time. Let $T_{packet}$ be the
+transmission time of a data packet. So: \[
+    \text{Goodput}  = \displaystyle\frac{T_{packet}}{\left(\frac{1}{\left(1 - p\right) ^ {2}} - 1\right)\left(T_{packet}
+    + T_{out}\right)}
+\]
+If $T_{out}$ is set to teh minimal value that we previously calculated $T_{out} = 2T_{prop} + T_{ack} + T_{pt}$ then \[
+    \text{Goodput} = \displaystyle\frac{T_{packet}}{\left(\frac{1}{\left(1 - p\right) ^ {2}} - 1\right)\left(T_{packet}
+    + T_{out}\right)}
+            = \displaystyle\frac{T_{packet} \left(1 - p\right) ^ {2}}{T_{packet} + T_{out}}
+\]
+
+We will note that doing this for \textit{every packet} is expensive for the goodput, neatly bringing us on to the next
+section.
+% section Stop and Wait (end)
+
+\section{Go Back N (GBN)}\label{sec:go_back_n_gbn_} % (fold)
+In Stop and Wait we waste time during the timeout period. We can use this time to send additional packets. We will
+assume that the sender has a sliding window of size $N$. The sender will send $N$ packets one after the other, and if it
+reaches a timeout, then it resends from the last known ACK. The receiver only sends ACKs for the packets within the
+sequence. 
+
+\textbf{Sender}: Window size of $N$ packets, and send at most $N$ unacknowledged packets. 
+If a timeout occurs, resend all packets that have been sent but not yet acknowledged. 
+$ACK \left(i\right)$ indicates that packets $1, 2 \dots, i$ have been received correctly (meaning that it is
+cumulative). When an ACK is received, then the beginning of the window is moved to the next unacknowledged sequence
+number. \\
+\textbf{Receiver}: Has a window size of a \textit{single} packet, and if it receives a packet with sequence number $i$
+correctly, and in order (which is to say, that the last packet delivered to the upper layer has a sequence number $i -
+1$), then send $ACK(i)$, and deliver the data to the layer above. Otherwise the packet is corrupted, or not in order, so
+discard it, and send ACK for the most recently received in order packet.
+
+The sender has a timer for each transmitted packet, which is started after sending the final bit of a packet. \\ 
+
+Consider if we have a window size of 8, and use 3 bits to represent it. We can then desynchronise if all 8 packets are
+received, but all 8 ACKs are lost, since the sender will return to the beginning of the window, but the receiver will
+assume that this is new data. We can resolve this by for a window size of $n$, we use $\left\lceil \log_2 \left(n\right)
+\right\rceil  + 1$ bits to represent it. 
+
+\subsection{Questions}\label{sub:questions} % (fold)
+Given a network with 2 nodes, A and B, we assume:
+\begin{itemize}
+    \item Node A only sends data to B, B only ACKs to A
+    \item No limit on buffers or sequence numbers
+    \item The packet transmission ($T_{packet}$), propagation time ($T_{prop}$) and packet processing time ($T_{pt}$ )
+        are constant
+    \item ACKs are delivered without any errors and $T_{ack} = 0$
+    \item $T_{out}$ is set to the minimal value that avoids unnecessary retransmissions
+    \item $T_{out} = 2T_{prop} + T_{ack} + T_{pt}$
+    \item Window size is equal to $T_{out} + 1$
+\end{itemize}
+\subsubsection{Question 1}\label{sec:question_} % (fold)
+
+We will change the protocol as follows: \begin{itemize}
+    \item When node A detects a failure, it re-transmits the failed packet $L$ times
+    \item Node A activates the timeout only after the last packet was sent
+    \item Node A will keep transmitting the $L$ packets even if got an ACK for one of them
+    \item Node B will ACK the first packet and ignore all duplicates
+\end{itemize}
+
+Complete the diagram when $L = 2,\ T_{prop} = 2,\ T_{packet} = 1,\ T_{pt} = 1$, the transmissions of packet number 2
+fail 3 times, and all other packets arrive successfully: 
+\begin{figure}[H]
+    \center
+    \includegraphics[scale=0.2]{tutorial_9_gobackn_q1.png}
+\end{figure}
+
+
+% subsubsection Question 1 (end)
+% subsection Questions (end)
+% section Go Back N (GBN) (end)
+
+\section{Selective Repeat}\label{sec:selective_repeat} % (fold)
+
+% section Selective Repeat (end)
+
+\end{document}
