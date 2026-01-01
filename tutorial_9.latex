@@ -233,10 +233,17 @@ successfully transmit a pcaket?
     k \text{ retries: } t_k = T_{packet} + \left(T_{out} + L \cdot T_{packet}\right) \cdot k \\
 \end{gather}
 
-The expected time is \[
-    t_{avg} = \displaystyle\sum_{k = 0}^{\infty}t_k p_k = T_{packet} + \displaystyle\frac{p \left(T_{out} + L \cdot
-    T_{packet}\right)}{1 - p ^ {L}} %TODO full computation 35
-\]
+The expected time is \begin{align*}
+    t_{avg} &= \displaystyle\sum_{k = 0}^{\infty}t_k p_k \\ 
+            &= T_{packet} + \displaystyle\sum_{k = 1}^{\infty} \left(T_{out} + L \cdot T_{packet}\right) k \cdot p_k \\ 
+            &= T_{packet} + pp \left(1 - p ^ {L}\right) \left(T_{out} + L \cdot T_{packet}\right) \displaystyle\sum_{k =
+            1}^{\infty} k \left(p ^ {L}\right) ^ {k - 1} \\ 
+    \displaystyle\sum_{k = 1}^{\infty}k \left(p ^ {L}\right) ^ {k - 1} &= \displaystyle\frac{1}{1 - p ^ {L}}
+    \displaystyle\sum_{k = 1}^{\infty}k \left(p ^ {L}\right) ^ {k - 1} \left(1 - p ^ {L}\right) \\ 
+                                                                       &= \displaystyle\frac{1}{\left(1 - p ^ {L}\right)
+                                                                       ^ {2}} \\
+    \implies t_{avg} &= T_{packet} + \displaystyle\frac{p \left(T_{out} + L \cdot T_{packet}\right)}{1 - p ^ {L}} 
+\end{align*}
 % subsubsection Question 3 (end)
 
 \subsubsection{Question 4}\label{sec:question_} % (fold)
@@ -245,16 +252,25 @@ What is the expected goodput of the protocol?
 \textit{ Sol. }
 Let $a = \displaystyle\frac{T_{out} + T_{packet}}{T_{packet}}$
 
-\[
-    \text{Goodput} = \displaystyle\frac{T_{packet}}{T_{avg}} = \displaystyle\frac{1 - p ^ {L}}{1 - p ^ {L} + p \left(a +
-    L - 1\right)}
-\]
+\begin{align*}
+    \text{Goodput} &= \displaystyle\frac{T_{packet}}{T_{avg}} \\ 
+                         &= \displaystyle\frac{T_{packet}}{T_{packet} + \frac{p \left(T_{out} + L \cdot
+                         T_{packet}\right)}{1 - p ^ {L}}} \\ 
+                         &= \displaystyle\frac{\left(1 - p ^ {L}\right) T_{packet}}{\left(1 - p ^ {L}\right) T_{packet}
+                         + p \left(T_{out} + L \cdot T_{packet}\right)} \\ 
+                         &= \displaystyle\frac{\left(1 - p ^ {L}\right)T_{packet}}{\left(1 - p ^ {L}\right)T_{packet} +
+                         p \left(T_{out} + T_{packet}\right) + p \cdot T_{packet} \left(L - 1\right)} \\ 
+                         &= \displaystyle\frac{1 - p ^ {L}}{1 - p ^ {L} + \frac{p \left(T_{out} +
+                         T_{packet}\right)}{T_{packet}} + p \left(L - 1\right)} \\ 
+                         &= \displaystyle\frac{1 - p ^ {L}}{1 - p ^ {L} + p \cdot a + p \left(L - 1\right)} \\ 
+                         &= \displaystyle\frac{T_{packet}}{T_{avg}} \\
+                         &= \displaystyle\frac{1 - p ^ {L}}{1 - p ^ {L} + p \left(a + L - 1\right)}
+\end{align*}
 
-In contrast, in GBN we have $L = 1$, therefore the goodput (under this question's assumptions) is \[
-    \text{Goodput}_{GBN} = \displaystyle\frac{1 - p}{1 - p + pa}
-\]
-
-% TODO 37, complete computation
+In contrast, in GBN we have $L = 1$, therefore the goodput (under this question's assumptions) is \begin{align*}
+    \text{Goodput}_{GBN} 
+    &= \displaystyle\frac{1 - p}{1 - p + pa}
+\end{align*}
 % subsubsection Question 4 (end)
 % subsection Questions (end)
 % section Go Back N (GBN) (end)
