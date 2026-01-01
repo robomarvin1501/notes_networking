@@ -203,12 +203,162 @@ fail 3 times, and all other packets arrive successfully:
     \includegraphics[scale=0.2]{tutorial_9_gobackn_q1.png}
 \end{figure}
 
-
+\textit{ Sol. }We will firstly compute $T_{out} = 2T_{prop} + T_{ack} + T_{pt} = 2 \cdot 2 + 1 + 0 = 5$. This results in
+a window size of 6. As can be seen, we wind up with the following answer 
+\begin{figure}[H]
+    \center
+    \includegraphics[scale=0.2]{tutorial_9_gobackn_s1.png}
+\end{figure}
 % subsubsection Question 1 (end)
+
+\subsubsection{Question 2}\label{sec:question_} % (fold)
+For a given $L$, assume that packets fail with probability $p$. What is the probability to succeed with exactly $k$
+retries, where each retry consists of $L$ packets? \\ 
+
+\textit{ Sol. }\begin{gather}
+    \text{First try: } p_0 = 1 - p \\
+    \text{First retry: } p_1 = p \left(1 - p ^ {L}\right) \\
+    \text{Second retry: } p_2 = p \cdot p ^ {L} \left(1 - p ^ {L}\right) \\
+    k \text{ retries: } p_k = p \cdot \left(p ^ {L}\right) ^ {k - 1} \left(1 - p ^ {L}\right) \\
+\end{gather}
+% subsubsection Question 2 (end)
+
+\subsubsection{Question 3}\label{sec:question_} % (fold)
+Assuming that $T_{pt} = T_{ack} = 0$, ad the receiver is ready to acscept the packet, what is the expected time to
+successfully transmit a pcaket?
+
+\textit{ Sol. }\begin{gather}
+    \text{First try: } t_0 = T_{packet} \\
+    \text{One retry: } t_1 = T_{packet} + \left(T_{out} + L \cdot T_{packet}\right) \\
+    k \text{ retries: } t_k = T_{packet} + \left(T_{out} + L \cdot T_{packet}\right) \cdot k \\
+\end{gather}
+
+The expected time is \[
+    t_{avg} = \displaystyle\sum_{k = 0}^{\infty}t_k p_k = T_{packet} + \displaystyle\frac{p \left(T_{out} + L \cdot
+    T_{packet}\right)}{1 - p ^ {L}} %TODO full computation 35
+\]
+% subsubsection Question 3 (end)
+
+\subsubsection{Question 4}\label{sec:question_} % (fold)
+What is the expected goodput of the protocol? 
+
+\textit{ Sol. }
+Let $a = \displaystyle\frac{T_{out} + T_{packet}}{T_{packet}}$
+
+\[
+    \text{Goodput} = \displaystyle\frac{T_{packet}}{T_{avg}} = \displaystyle\frac{1 - p ^ {L}}{1 - p ^ {L} + p \left(a +
+    L - 1\right)}
+\]
+
+In contrast, in GBN we have $L = 1$, therefore the goodput (under this question's assumptions) is \[
+    \text{Goodput}_{GBN} = \displaystyle\frac{1 - p}{1 - p + pa}
+\]
+
+% TODO 37, complete computation
+% subsubsection Question 4 (end)
 % subsection Questions (end)
 % section Go Back N (GBN) (end)
 
 \section{Selective Repeat}\label{sec:selective_repeat} % (fold)
+In GBN, we potentially retransmit many packets that were in fact received should a single packet fail. If packet 2
+fails, but 3, 4, 5 all succeeded, we will still retransmit all of 3, 4, and 5, along with 2. Instead, we may retransmit
+selectively, and only resend the packets that failed. However, this comes at the cost of the receiver needing to store
+the window of messages, not just the transmitter. In the end, a minor cost. 
+
+\textbf{Sender}: Window size of $N$ packets, which are sent one by one, in order. A timer for each packet is started
+after the transmission of the last bit of each packet, and a timeout for packet $i$ indicates retransmitting packet $i$.
+$ACK \left(i\right)$ indicates reception of packet $i$ \textit{only}. If an ACK is received for $i$, mark it as
+received. If this is the first packet of the window, then shift the beginning of the window to the first unacknowledged
+packet. \\ 
+\textbf{Receiver}: Stores a window size of $N$ packets, and sends an ACK for every correctly received packet (even if it
+is not in order) in the window. Out of order packets with a sequence number \textit{within} the window range are
+buffered until any missing packets with lower sequence numbers are received. When all missing packets are received, then
+deliver all in order packets to the upper layer and move the beginning of the window to the next expected (in order)
+sequence number.
+
+We once again have the problem of number of bits / window size as we discussed earlier. For a window size $N$, we need
+$\geq 2N$ sequence numbers, i.e. $\left\lceil \log_2 2N \right\rceil $ bits.
+
+\begin{table}[H]
+     \centering
+     \begin{tabular}{|p{0.27\textwidth}|p{0.27\textwidth}|p{0.27\textwidth}|}
+         \hline
+         Criteria & Selective repeat & Go back N \\ \hline
+         Bandwidth utilisation & Only retransmits lost packets & Might retransmit packets that have already successfully
+         arrived\\ \hline
+         Window sizes & Sender: $N$, Receiver: $N$ & Sender: $N$, Receiver: 1 \\ \hline
+         Sequence numbers & $2N$ & $N + 1$ \\ \hline
+         Out of order handling & Track which packets were received (out of order is possible) & No sorting, receiver
+         only accepts packets in order \\ \hline 
+         Receiver storage & Store packets until missing / damaged packets are retransmitted & No need to keep undamaged
+         packets, since the sender may resend \\ \hline 
+     \end{tabular}
+     \caption{}
+\end{table} 
+
+\subsection{Questions}\label{sub:questions} % (fold)
+\subsubsection{Question 1}\label{sec:question_} % (fold)
+Assume an ideal SR protocol: \begin{itemize}
+    \item Infinite sized windows on both ends
+    \item Infinite bits for sequence numbers
+    \item Infinite sized buffers on both ends
+    \item ACKs do not fail and $T_{ack}$ is negligible
+    \item Packets fail with probability $p$
+\end{itemize}
+What is the protocol's goodput? 
+
+\[
+    \text{Goodput} = \displaystyle\frac{T_{packet} \left(1 - p\right) + 0 \cdot p}{T_{packet}} = 1 - p
+\]
+
+% subsubsection Question 1 (end)
+
+\subsubsection{Question 2}\label{sec:question_} % (fold)
+A sender (A) and a receiver (B) works with S\&W with the following modification: station A transmits a window of $L$
+packets, starts a timer, and waits for all ACKs (for every packet in the transmitted window) before transmitting the
+next window. \\
+In case any of the packets are not ACKed then the entire window is considered failed and station A retransmits the
+entire window (after the timeout) \\
+If all packets are ACKed, station A will transmit the next window. 
+
+$T_{prop}$ is given, $T_{pt}, T_{ack}$ are negligible. What is the optimal $T_{out}$? (optimal in the sense of avoiding
+unnecessary retransmissions)
+
+\textit{ Sol. }$T_{out} = 2T_{prop}$
+
+From now, let us assume that $T_{out} = 2T_{prop}$, $L= 4,\ T_{prop} = 2$[unit]
+% subsubsection Question 2 (end)
+
+\subsubsection{Question 2}\label{sec:question_} % (fold)
+Draw the packets, and the ACKs transmission until packet 4 is successfully received, where packet 3 fails in its first
+transmission, and all other packets in the window are successful (got ACKed). \\ 
+
+\textit{ Sol. }\begin{figure}[H]
+    \center
+    \includegraphics[scale=0.2]{tutorial_9_sr_s2.png}
+    \caption{Solution}
+\end{figure}
+% subsubsection Question 2 (end)
+
+\subsubsection{Question 3}\label{sec:question_} % (fold)
+What is the probability for an $L$ sized window to fail?
+
+\textit{ Sol. }$p' = 1 - \left(1 - p\right) ^ {L}$.
+% subsubsection Question 3 (end)
+
+\subsubsection{Question 4}\label{sec:question_} % (fold)
+What is the goodput?
+
+\textit{ Sol. }\begin{align*}
+    \eta &= \displaystyle\frac{\E \left[\text{Effective sending time}\right]}{L \cdot T_{packet} + 2T_{prop}} \\ 
+         &= \displaystyle\frac{\Pr \left[\text{Window failed}\right] \cdot 0 + \Pr \left[\text{Window succeeded}\right]
+             \cdot L \cdot T_{packet}}{L \cdot T_{packet} + 2T_{prop}} \\ 
+         &= \displaystyle\frac{L \cdot T_{packet} \left(1 - p\right) ^ {L}}{L \cdot T_{packet} + 2 T_{prop}}
+\end{align*}
+% subsubsection Question 4 (end)
+
+
+% subsection Questions (end)
 
 % section Selective Repeat (end)
 
