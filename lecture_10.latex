@@ -63,7 +63,7 @@ time. From this, we can intuitively see that TCP is slower than UDP. However, wh
 example, the speed of download with a difference of potentially milliseconds is not relevant, but what is relevant is
 that the words on the webpage appear in the right order, and are all received. 
 
-\subsection{Multiplexing}\label{sub:multiplexing} % (fold)
+\section{Multiplexing}\label{sec:multiplexing} % (fold)
 The transport layer also allows multiplexing messages on a single wire. We may have more than one application
 communication between two hosts, A and B, over the same wire. To enable this, we have the socket abstraction of the
 transport layer. Sockets are abstractions of IP addresses, combined with ports. Ports numbered from 0 to 65535 (16 bit
@@ -74,8 +74,105 @@ single host to different applications on the computer.
 Demultiplexing works as follows. When the host receives IP datagrams, each datagram has in its header the source IP
 address, and the destination IP address. Each datagram is responsible for 1 transport layer segment, and each segment
 has a source port number, and a destination port number. The host uses IP addresses, and port number to direct segments
-to the appropriate sockets.
-% subsection Multiplexing (end)
+to the appropriate sockets. \\ 
+UDP sockets are identified by the tuple (destination IP address, destination port number). When the host OS receives a
+UDP segment, it checks the destination port number in the segment, and directs the segment to the socket with that port
+number. It should be noted that IP datagrams with difference source IP addresses / source sockets, but the same
+destination port number will be directed to the same socket. \\ 
+In contrast, TCP sockets are identified by 4-tuples: \begin{itemize}
+    \item Source IP address 
+    \item Source port number 
+    \item Destination IP address 
+    \item Destination port number
+\end{itemize}
+The receiving host OS then directs the segments to the appropriate socket, ensuring that different transmitting hosts do
+not transmit to the same socket. Note that this means for web servers, they will have a different socket for every
+connecting client. In fact, if the clients do not use persistent HTTP connections, then there will be a different
+socket for every request.
+% section Multiplexing (end)
+ 
+\section{UDP}\label{sec:udp} % (fold)
+This is a bare bones wrapper around IP. The segments sent over UDP may be lost, and delivered out of order. There is no
+handshake between the sender, and the receiver, and each segment is handled independently. Since TCP seems so much more
+stable, we are left wondering why UDP exists at all. Well, sometimes it is necessary, you cannot really have a TCP
+handshake in DHCP. Furthermore, the handshake can induce a (relatively) large delay before the start of transmission,
+which is not always desirable. \\ 
+It is also incredibly simple, with no connection state at the sender, or the receiver, it has a very small segment
+header, and has no congestion control, so can send messages as fast as desired. This is particularly useful in things
+like video / voice transmission when in a video / phone call. Since each packet contains a small amount of the data
+stream, losing a single packet here and there will not significantly, or even noticeably impact the experience. However,
+if the video stream was being sent by TCP, then should a packet be lost, then the call would freeze until that packet
+had been received, or worse, groups of frames would start to be played out of order, along with their attached audio,
+making the entire thing completely incomprehensible. Simply losing a couple of frames in the middle is greatly
+preferable. 
+% section UDP (end)
+
+\section{TCP}\label{sub:tcp} % (fold)
+\subsection{Overview}\label{sec:overview} % (fold)
+TCP is point to point, with a single sender / receiver pair, sending a reliable, in order byte stream, and is pipelined,
+with congestion and flow control, according to a set window size. It sends full duplex, so data can flow in both
+directions in the same connection, with a defined Maximum Segment Size (MSS). 
+% subsubsection Overview (end)
+
+\section{Opening and closing}\label{sec:opening_and_closing} % (fold)
+Since we need a sender, and a receiver to establish a TCP connection before exchanging data segments, it follows that
+some variables need to be initialised first: The sequence numbers, the buffers into which data may be received, and the
+flow control information. The client is the connection initiator, sending a request to open a connection on a socket,
+and the server is contacted by the client, where it will accept a TCP connection on a socket. This process may be
+summarised by the following three way handshake: \begin{enumerate}
+    \item The client host sends a TCP SYN segment to the server, which specifies the initial sequence number, but
+        contains no data 
+    \item The server host receives the SYN, and replies with the SYNACK segment. The server allocates buffers, and
+        specifies the server initial sequence number 
+    \item The client receives the SYNACK, to which it responds with an ACK segment, which may contain data
+\end{enumerate}
+
+To close a connection, the client closes the socket. This involves two steps. \begin{enumerate}
+    \item The client sends the TCP FIN control segment to the server
+    \item The server responds with ACK, and then its own FIN 
+    \item (The client sends an ACK, but keeps the socket open for \enquote{timed wait}, a period of time where it waits
+        to see if the server will send another ACK, FIN combination, because it did not receive the clients ACK)
+\end{enumerate}
+After the tied wait is over, the client is confident that the server has received its own ACK, and closes the socket.
+% subsection Opening and closing (end)
+
+\subsection{Sequences and ACKs}\label{sub:sequences_and_acks} % (fold)
+Each segment begins with a number, known as the sequence number, which indicates the number of this segment in the
+stream of data. Let us consider the transmitting host A, and receiving host B. Both hosts are maintaining their own
+sequence numbers, which are mirrored in the other host's ACK numbers. So, for a simplified example, when A sends a
+segment, then along with the data it sends it with the next sequence number in its own stream, and the ACK that
+corresponds to the next sequence number that B will transmit. B then responds to this message with an ACK message,
+containing the next sequence number in its stream, and an ACK that corresponds to A's next sequence number.
+\begin{table}[H]
+     \centering
+     \begin{tabular}{|p{0.2\textwidth}|p{0.2\textwidth}|p{0.2\textwidth}|p{0.2\textwidth}|}
+         \hline
+         Direction & Seq & ACK & Time \\ \hline
+         A $\to$ B & 42 & 79 & 1 \\ \hline
+         B $\to$ A & 79 & 43 & 2 \\ \hline
+         A $\to$ B & 43 & 80 & 3 \\ \hline
+     \end{tabular}
+     \caption{Simplified example}
+\end{table} 
+As we can see, TCP creates reliable
+service on top of IP’s
+unreliable service. It provides pipelined segments, with cumulative ACKs, and a single retransmission timer.
+Retransmission is triggered by timeout events (too much time has passed without an ACK), and duplicate ACKs.
+% subsection Sequences and ACKs (end)
+
+\subsection{Simplified sender}\label{sub:simplified_sender} % (fold)
+Let us consider a simplified sender, that ignores duplicate ACKs, flow control, and congestion control. Upon receiving
+data, create a segment with a sequence number. The sequence number is a byte stream number of the first data byte in the
+segment. Start the ACK timer, if it is not already running (since if there is already a segment that has not been ACKed,
+the timer will already be running). If the timer reaches the timeout interval, then retransmit the segment that started
+the timer, and restart it. When an ACK is received, if it acknowledges previously unACKed segments, then update which
+segments are known to be ACKed, and start the timer if there remain outstanding segments.
+% subsection Simplified sender (end)
+
+
+
+
+% subsection TCP (end)
 
 
 
