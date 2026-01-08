@@ -16,6 +16,7 @@
 \usepackage{bbm}
 \usepackage{wrapfig}
 \usepackage{tabularx}
+\usepackage{multirow}
 \usepackage[autostyle=true]{csquotes}
 \graphicspath{ {./images/} }
 \usepackage[bottom=0.5cm, right=1.5cm, left=1.5cm, top=1.5cm]{geometry}
@@ -134,13 +135,157 @@ The connection is established through a \textbf{three way handshake}. \begin{ite
     \item The client may now begin sending data
 \end{itemize}
 
+If the SYN packets are lost, then eventually, no SYN-ACK will arrive, so the client sets a timer waiting for SYN-ACK. If
+it is not received, then the client will retransmit the SYN. This does leave us with the question of how long should the
+initial timeout be, since the client has no idea what the round trip time to the server is. Some TCPs use a default of 3
+or 6 seconds, which is relatively long in comparison to the actual RTT value. 
 % subsubsection Establishing a connection (end)
+
+\subsubsection{Closing a TCP connection}\label{sec:closing_a_tcp_connection} % (fold)
+When the client wishes to close the connection: \begin{itemize}
+    \item The client sends FIN to the server, closing its connection
+    \item The server responds with ACK on the FIN 
+    \item The server sends a FIN message to the client, closing its side of the connection 
+    \item The client responds with ACK to the FIN
+\end{itemize}
+\begin{wrapfigure}{r}{0.3\textwidth}
+    \center
+    \includegraphics[width=\linewidth]{tutorial_10_close_tcp.png}
+    \caption{Close the TCP connection}
+\end{wrapfigure}
+% subsubsection Closing a TCP connection (end)
 % subsection Connections (end)
 
+\pagebreak
+\subsection{TCP sliding window}\label{sub:tcp_sliding_window} % (fold)
+Just like in Go Back N, and Selective Repeat, TCP uses a sliding window scheme, where there will be at most N packets in
+flight. However, unlike GBN, and SR, the window size is \textbf{dynamic}, so we need to decide how to set it. We have
+two main parameters dictating the window size: \begin{itemize}
+    \item The buffer size of the receiver (Flow control)
+    \item The current \enquote{congestion} of the network (Congestion control)
+\end{itemize}
+
+\subsubsection{Flow Control}\label{sec:flow_control} % (fold)
+We need to have some knowledge on the available buffer size of the receiver. The receiver sends the amount of buffer it
+can allocate for this connection in its ACKs, which is denoted as \textbf{rwnd} (receiver window). The sender will keep
+the invariant of \[
+    \text{Window size} = \text{LastByteSent} - \text{LastByteAcked} \leq rwnd
+\]
+If rwnd = 0, then we want the sender to keep on sending datat to the receiver. These packets will be ACKed by the
+receiver, and eventually the receiver buffer will free up, and the sender could ramp up the amount of data it sends.
+% subsubsection Flow Control (end)
+
+\subsubsection{Congestion control}\label{sec:congestion_control} % (fold)
+the sender needs to approximate the load the network can sustain at any given moment. However, there is no feedback on
+congestion from the network. We may instead approximate this by the loss of ACKs, or expired timers. TCP needs to decide
+when to increase or decrease the congestion window size (ie, the number of packets we believe that the network can
+sustain).
+
+In TCP Tahoe, and TCP Reno there are two states in which a TCP connection can be: \begin{itemize}
+    \item Slow Start - Start sending a very small amount of data, and increase it over time
+    \item Congestion Avoidance - Be prepared to handle congestion
+\end{itemize}
+There is also TCP Vegas, which is delay based, rather than loss based.
+
+The sender starts with a pre set slow start threshold: ssthresh. This is the parameter that determines when to switch
+from Slow Start to Congestion Avoidance. The sender also needs to decide when to increase / decrease the congestion
+window size. SS works as follows: \\
+\begin{wrapfigure}{r}{0.3\textwidth}
+    \center
+    \includegraphics[width=\linewidth]{tutorial_10_slow_start.png}
+    \caption{Slow start}
+\end{wrapfigure}
+\begin{itemize}
+    \item Start with a small window size (W = 1 MSS)
+    \item Double the congestion window (cwnd) every RTT 
+    \item For every ACK: $W = W + MSS$
+    \item Enter congestion avoidance when $W \geq ssthresh$
+\end{itemize}
+
+Exponential increase stops either when some failure occurs, or when we are sending too much (even without failures),
+though this requires choosing a threshold. \\
+When in congestion avoidance, for every N ACKs (ACKs for all packets in the window): $W := W + 1$. This results in a
+small additive increase – adds one MSS every RTT.
+
+Packets should be resent after a timeout. However, timeouts can be relatively long, and waiting for that can increase
+latency. So instead, we can resend after getting duplicate ACKs. These are an indication that some packets failed, but
+afterwards some packets succeeded. In practice, we wait for 3 duplicate ACKs, and detecting them requires less time than
+waiting for the entire timeout. If packet 4 is lost, but 5, 6, 7 are all received, then packet 3 will be ACKed 3 times,
+and so we know that 4 was lost, but 5, 6, and 7 were all received, so 4 should be retransmitted.
+
+Not every TCP variant implements this Fast Retransmission mechanism. In those that do, after receiving 3 duplicate ACKs,
+and retransmitting the relevant packet, depending on the TCP protocol (e.g. Reno / Tahoe), the sender may switch to SS,
+/ CA, change the size of ssthresh, and so on. Note that those changes are not a part of fast retransmission, but a
+reaction to 3 duplicate ACKS.
+
+On a packet loss, timeout, or 3 duplicate ACKs, both Tahoe, and Reno set $ssthresh = \displaystyle\frac{W}{2}$.
+Other changes depend on wheter a timeout, or 3 duplicate ACKs occurred: \begin{table}[H]
+     \centering
+     \begin{tabular}{|p{0.27\textwidth}|p{0.27\textwidth}|p{0.27\textwidth}|}
+         \hline
+          & TCP Tahoe & TCP Reno \\ \hline
+         Timeout & Enter slow start, and set W = 1 & Enter slow start, and set W = 1 \\ \hline
+         3 Duplicate ACKs & Enter slow start, and set W = 1 & Set $W = \frac{W}{2}$, and enter congestion avoidance \\ \hline
+     \end{tabular}
+     \caption{Tahoe vs Reno}
+\end{table} 
+
+One may see an interactive example at 
+\href{https://media.pearsoncmg.com/aw/ecs_kurose_compnetwork_7/cw/content/interactiveanimations/tcp-congestion/index.html}{this
+link}.
+
+So now we have the two parameters, the receiver buffer size (rwnd), and the congestion window (cwnd). TCP will select
+the minimal window of the two, meaning that the actual window size is: \[
+    \text{LastByteSent} − \text{LastByteACKed} \leq \displaystyle\min_{} \left\{rwnd, cwnd\right\} 
+\]
+% subsubsection Congestion control (end)
+% subsection TCP sliding window (end)
 
 % section TCP (end)
 
 \section{Network Address Translation (NAT)}\label{sec:network_address_translation_nat_} % (fold)
+NAT is a mechanism that iis optionally used by routers to reduce the number of devices using public IPv4 addresses,
+instead reusing a pool of private addresses. Recall that there are not many IPv4 addresses in the world, only around 4
+billion, so we use NAT such that all the devices behind a single router have only the router's public IPv4 address, and
+it handles multiplexing the data to the relavent address within the network. This also has a possible privacy
+improvement. 
+
+Private IP addresses were thus constructed, these are reserved addresses that can only be used inside internal (private)
+LANs, they cannot be used in connections to the internet. For a device witha  private IP address to communicate with
+devices outside of its LAN, its IP address needs to be translated to a public IP address. There are a few private
+ranges, such as 10.0.0.0 - 10.255.255.255, 172.16.0.0 - 172.31.255.255, and 192.168.0.0 - 192.168.255.255. 
+
+All devices in the LAN have private IP addresses. The router that has access to the internet is assigned a single public
+IP address, which will be used for the entire LAN. The router changes the Source IP and Source Port fields of outgoing
+packets and Dest IP, Dest Port of incoming packets. Note: this is different from “regular” routing, where routers do
+not change these fields. The router keeps a translation table, where it converts the translated port, and IP to the
+original port and IP. This is also matched based off protocol (TCP, UDP).
+
+Consider a LAN with 3 computers, A, B, and C: \begin{itemize}
+    \item A has the IP 192.168.0.1, and runs two TCP applications communicating with the internet of 1024, and 2000
+    \item B has the IP 192.168.0.2, and runs two UDP applications communicating with the internet of 1000, and 2000
+    \item B has the IP 192.168.0.3, and runs one TCP application communicating with the internet of 1024
+\end{itemize}
+The network’s assigned public IP is 132.58.38.2. 
+
+Below is the NAT table, where we assume that the translated port numbers start at 5001 and increase by 1 when a new row
+is added to the table. 
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|ll|ll|}
+    \hline
+    \multirow{2}{*}{L4 Protocol} & \multicolumn{2}{l|}{Outside network}                    & \multicolumn{2}{l|}{Private Network}             \\ \cline{2-5} 
+                                 & \multicolumn{1}{l|}{Translated L4 port} & Translated IP & \multicolumn{1}{l|}{Original L4 port} & Local IP \\ \hline
+    TCP                          & \multicolumn{1}{l|}{5001}               & 132.58.38.2   & \multicolumn{1}{l|}{1024}            & 192.168.0.1         \\ \hline
+    TCP                          & \multicolumn{1}{l|}{5002}               & 132.58.38.2   & \multicolumn{1}{l|}{2000}            & 192.168.0.1         \\ \hline
+    UDP                          & \multicolumn{1}{l|}{5003}               & 132.58.38.2   & \multicolumn{1}{l|}{1000}            & 192.168.0.2         \\ \hline
+    UDP                          & \multicolumn{1}{l|}{5004}               & 132.58.38.2   & \multicolumn{1}{l|}{2000}            & 192.168.0.2         \\ \hline
+    TCP                          & \multicolumn{1}{l|}{5005}               & 132.58.38.2   & \multicolumn{1}{l|}{1024}            & 192.168.0.3         \\ \hline
+    \end{tabular}
+    \caption{NAT table}
+\end{table}
+
 
 % section Network Address Translation (NAT) (end)
 
