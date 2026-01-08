@@ -1,0 +1,147 @@
+\documentclass[a4paper]{article}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{mathtools}
+\usepackage{blindtext}
+\usepackage{multicol}
+\usepackage{graphicx}
+\usepackage{placeins}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage[bookmarks=true]{hyperref}
+\usepackage{bookmark}
+\usepackage{bbm}
+\usepackage{wrapfig}
+\usepackage{tabularx}
+\usepackage[autostyle=true]{csquotes}
+\graphicspath{ {./images/} }
+\usepackage[bottom=0.5cm, right=1.5cm, left=1.5cm, top=1.5cm]{geometry}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{exercise}{Exercise}
+\newtheorem{example}{Example}
+\newtheorem{definition}{Definition}[section]
+
+\newcommand{\R}{\ensuremath{\mathbb{R}}}
+\newcommand{\N}{\ensuremath{\mathbb{N}}}
+\newcommand{\Z}{\ensuremath{\mathbb{Z}}}
+\newcommand{\p}{\ensuremath{\mathbb{P}}}
+\newcommand{\E}{\ensuremath{\mathbb{E}}}
+\newcommand{\F}{\ensuremath{\mathcal{F}}}
+\newcommand{\1}{\ensuremath{\mathbbm{1}}}
+\newcommand{\B}{\ensuremath{\mathbbm{B}}}
+
+\title{Tutorial 10 - Transport layer TCP and UDP}
+\author{Gidon Rosalki}
+\date{2026-01-08}
+
+
+\begin{document}
+\maketitle
+\noindent\textbf{Notice:} If you find any mistakes, please open an issue at \href{https://github.com/robomarvin1501/notes\_networking}{\texttt{https://github.com/robomarvin1501/notes\_networking}}
+
+\section{The Transport Layer}\label{sec:the_transport_layer} % (fold)
+Recall that the data is encapsulated at each layer going downwards, where the application layer merely sends the data,
+the transport layer has provided it with an abstraction with which to do that, but adds the TCP/UDP header. Similarly,
+the network layer has provided the transport layer with its abstraction, and needs to add the IP header to the data, and
+then the data link layer adds the frame header, and trailer to all the data encapsulated in the previous layers. 
+
+We will consider two protocols, UDP, and TCP. These extend layer 3 delivery service between end hosts to a delivery
+service between application layer processes running on the end hosts. Recall that layer 3 (IP) only provides a
+\enquote{best effort} guarantee for data delivery, but data might arrived corrupted, and packets may not arrive, or
+arrive out of order. 
+
+To distinguish between different sockets created by application processes on our host we allocate them different
+addresses through the use of \textit{logical ports}. There are 65536 (16 bits) different logical ports that may be
+provided to applications. In UDP, which has no consistent connection, a socket is therefore identified by the 2-tuple
+(destination IP, destination port), and in TCP by the 4-tuple (source IP, source port, destination IP, destination
+port). \\ 
+When an application is ready to receive data, it allocates a logical port through a system called binding as
+learned in OS. Note that not all ports are available, 1024 are reserved for specific protocols, for example:
+\begin{itemize}
+    \item HTTP - 80
+    \item HTTPS - 443 
+    \item SSH - 22 
+    \item DNS - 53
+\end{itemize}
+
+% section The Transport Layer (end)
+
+\section{UDP}\label{sec:udp} % (fold)
+UDP does not provide any guarantees to the user regarding the sending of data, aside from allowing multiplexing
+(different packets to different applications through port numbers), and packet integrity by adding a checksum to the
+packet. The packet will not be resent if it arrives corrupted, but the receiving application will not be sent it from
+the transport layer if it did arrive corrupted, it will just be dropped.
+
+There is in fact a source port field in the UDP packet header, but it is optional. Many protocols do in fact add it to
+the packet, for example DNS. 
+% section UDP (end)
+
+\section{TCP}\label{sec:tcp} % (fold)
+TCP provides additional features, such as error detection and in order delivery. It makes use of checksums to detect
+corrupted data, and makes use of an acknowledgement system to request retransmissions in order to ensure reliable
+delivery. Sequence numbers are used to detect losses, and reorder transmitted data. \\ 
+The main subject for this tutorial is the congestion control that TCP provides. It tries to ensure that congestion
+within the network is avoided if possible. Finally, it also provides flow control, to avoid overflowing the recipients
+buffer.
+
+TCP makes use of sessions, one must explicitly open and close a TCP session. In this session, there will be the local
+sequence of ACKS. Note that this system provides no guarantees about bandwidth, or delay, since those depend on the
+network. Additionally, these ACKs are cumulative, similar to GBN as learnt previously. 
+
+\subsection{TCP Segments}\label{sub:tcp_segments} % (fold)
+One way we could send data is byte by byte. We would need ACK for every byte sent, so this is inefficient – the overhead
+of headers is too high. We could instead bundle several bytes into a single segment, though this does leave us with the
+question about when to send the segment. There is a maximum size for a segment that we can support, which is the number
+of bytes in a single layer 2 frame (recall that layer 3 also adds its own header to the data, and our header).
+
+Let us define a couple of concepts: \begin{itemize}
+    \item MSS - maximum segment size (bytes). This is the maximum amount of application-layer data in the segment. 
+    \item MTU - maximal transfer unit (bytes). This is the largest link-layer frame that can be sent in the network.
+\end{itemize}
+As stated above, there is a distance between these two sizes, since we need other things to add to our packets besides
+the TCP segment (i.e., headers). Therefore MSS < MTU.
+
+We have three requirements for reliable transfer: \begin{itemize}
+    \item Validate that a packet was received as it was sent (e.g., checksum)
+    \item Notify sender that you got its message (e.g., ACK/NACK)
+    \item Deliver the data in-order for the upper layer
+\end{itemize}
+There are applications that would suffer from having strictly ordered data like this, like video calls, VOIP, streaming,
+and so on. If a packet is lost, and then all further receiving is buffered while it waits to receive that packet, then
+the entire stream/conversation will lag while it waits for that packet. It is better to simply lose the packet, have a
+drop in quality for a moment, and then continue as normal.
+% subsection TCP Segments (end)
+
+\subsection{Connections}\label{sub:connections} % (fold)
+\subsubsection{Establishing a connection}\label{sec:establishing_a_connection} % (fold)
+A client initiates a connection with a server, and once it is initialised, both the client, and the server may use the
+connection simultaneously (meaning it is in full duplex). One of the initialisation steps is agreeing on the sequence
+numbers, since in order for them to have meaning, the sequence scheme needs to be established first.
+
+\begin{wrapfigure}{r}{0.3\textwidth}
+    \center
+    \includegraphics[width=\linewidth]{tutorial_10_three_way_handshake.png}
+    \caption{Three way handshake}
+\end{wrapfigure}
+The connection is established through a \textbf{three way handshake}. \begin{itemize}
+    \item The client begins by sending \textbf{SYN}, with the field $seq = x$ 
+    \item The server responds with \textbf{SYN-ACK}, with the fields $ack = x + 1, seq = y$
+    \item The client then responds with \textbf{ACK}, with the fields $ack = y + 1, seq = x + 1$
+    \item The client may now begin sending data
+\end{itemize}
+
+% subsubsection Establishing a connection (end)
+% subsection Connections (end)
+
+
+% section TCP (end)
+
+\section{Network Address Translation (NAT)}\label{sec:network_address_translation_nat_} % (fold)
+
+% section Network Address Translation (NAT) (end)
+
+\end{document}
