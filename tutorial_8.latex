@@ -270,7 +270,7 @@ What's the optimal solution for the $Max-MCF_{OPT}$ problem in this scenario? Sh
 and explain your answer.
 
 \subsubsection{Solution}\label{sec:solution} % (fold)
-Let us analyse the maximum load by looking at the cut $\left(C, C \setminus \left\{B, C\right\}\right)$. We will note
+Let us analyse the maximum load by looking at the cut $\left(V, V \setminus \left\{B, C\right\}\right)$. We will note
 that \textbf{all} the commodities must flow through this cut. Therefore, the minimal maximum load is lower bounded by
 the minimal load on this cut. The total commodities sun to 8 units, and the cut has 3 edges, with a total capacity of 6
 units. Therefore, the minimal maximum load is $\displaystyle\frac{8}{6} = \displaystyle\frac{4}{3}$. So, we want a
