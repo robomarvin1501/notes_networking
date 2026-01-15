@@ -69,7 +69,7 @@ ASes sign bilateral, long term contracts between them, that concern themselves w
 destinations can be reached from them, and how much money changes hands in order to achieve this. Neighbouring pairs of
 ASes typically either have customer provider relationships, or peering relationships: \begin{itemize}
     \item Customer/Provider: One AS pays another for reachability to some set of destinations 
-    \item Peering: Two ASes exchange traffic for free, typically only for one or two of their customers % TODO 1010 why free
+    \item Peering: Two ASes exchange traffic for free, typically only for one or two of their customers
 \end{itemize}
 The relationship may either be \enquote{full}, where the customer receives routes for all Internet destinations from
 its traffic provider, or \enquote{partial}, where the customer receives routes for some subset of all Internet
@@ -170,6 +170,34 @@ network will be safe, but we do have the following theorem:
 \begin{theorem}[]
     The existence of more than one stable BGP states in a network implies that it is \textbf{not} BGP safe
 \end{theorem}
+
+In order to find stable states, we \textit{could} try every state, but there are simpler methods. 
+
+\subsubsection{Gao-Rexford Conditions}\label{sec:gao_rexford_conditions} % (fold)
+We can guarantee BGP safety in a network if \textbf{all} the following conditions hold: \begin{enumerate}
+    \item \textbf{Topology condition}: No customer-provider cycles in the AS graph
+    \item \textbf{Preference condition}: Prefer customer learned routes over provider, and peer learned routes (go by
+        preference through paying customers, than through peers)
+    \item \textbf{Export condition}: Prover and peer learned routes are exported \textit{only} to customers
+\end{enumerate}
+
+We will note that in the above example, the topology condition did not hold, AS(1) is a customer of AS(2), who is a
+customer of AS(3), who is a customer of AS(1). We can change this, by swapping the arrow from AS(1) to AS(3), to be from
+AS(3) to AS(1). We will note that now the preference condition does not hold, since AS(3) has a preference for sending
+to its provider AS(1), rather than its customer d. This may be fixed by swapping AS(3)'s preferences to be (3d), (31d),
+(312d). 
+\begin{figure}[H]
+    \center
+    \includegraphics[scale=0.2]{tutorial_11_bgp_stabilised.png}
+    \caption{Stabilised version}
+\end{figure}
+AS(3) will choose the path (3d), and announce it to AS(1), and AS(2), since it is a customer learned path. AS(2) will
+choose the path (23d), ad announce it to AS(1), since it is a customer learned path. Finally, AS(1) does not know the
+path (12d), since it was not announced by AS(2), and so it will choose the path (1d). Everyone has their preference of
+paths, and so the network has stabilised. \\ 
+There are not too many questions to be asked on this subject, they generally follow the format of \enquote{is this
+network stable}, and if it is not stable \enquote{change this network to be stable}.
+% subsubsection Gao-Rexford Conditions (end)
 
 % subsection BGP Safety (end)
 % section BGP Stability (end)
