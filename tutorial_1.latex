@@ -129,9 +129,9 @@ probability $e^{-1000T}$. The probability of creating a good packet is $p$.
 \section{Random variables}\label{sec:random_variables} % (fold)
 A random variable $X$ is a function $X : \Omega \to \R$. It may be said that $X$ describes some numerical property that
 our sample space could have. It may either be discrete (like a coin toss), or continuous (such as time). For example, in
-a coin toss $\Omega = \left\{H, T\right\}$, we may define a random variable (called an indicator in this case) $I_H$:
+a coin toss $\Omega = \left\{H, T\right\}$, we may define a random variable (called an indicator in this case) $\mathbb{1}_H$:
 \[
-    I_H = \begin{cases}
+    \mathbb{1}_H = \begin{cases}
         1, &\text{ if }\omega = H \\
         0, &\text{ if }\omega = T \\
     \end{cases}

@@ -107,7 +107,7 @@ Suppose that there are $N$ nodes, each with many frames to send, each transmitti
 The probability that a given node succeeds in a given slot is \[
     p \left(1 - p\right)^{N - 1}
 \]
-and the probability that \textit{some} node succeeds is approximately \[
+and the probability that \textit{some} node succeeds is \[
     Np \left(1 - p\right)^{N - 1}
 \]
 To find the maximum efficiency, we want to find the $p^*$ that maximises $Np \left(1 - p\right)^{N - 1}$. For many

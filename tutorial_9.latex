@@ -140,7 +140,7 @@ The expected number of tries until success (i.e. all attempts except the last fa
 The goodput is the ratio of effective transmission time, and total transmission time. Let $T_{packet}$ be the
 transmission time of a data packet. So: \[
     \text{Goodput}  = \displaystyle\frac{T_{packet}}{\left(\frac{1}{\left(1 - p\right) ^ {2}} - 1\right)\left(T_{packet}
-    + T_{out}\right)}
+    + T_{out}\right) + \left(T_{packet} + 2T_{prop} + T_{ack} + T_{pt}\right)}
 \]
 If $T_{out}$ is set to the minimal value that we previously calculated $T_{out} = 2T_{prop} + T_{ack} + T_{pt}$ then \[
     \text{Goodput} = \displaystyle\frac{T_{packet}}{\left(\frac{1}{\left(1 - p\right) ^ {2}} - 1\right)\left(T_{packet}

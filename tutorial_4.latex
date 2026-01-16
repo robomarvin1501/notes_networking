@@ -136,14 +136,14 @@ nodes will be aware of the collision, and will now ignore the previous (corrupte
 
 % subsubsection subsubsection name (end)
 
-\subsubsection{1-persistent}\label{sec:_persistent} % (fold)
+\subsubsection{Non-persistent}\label{sec:_persistent} % (fold)
 In the case of collisions, we want to wait before trying again. There are a few ways to decide how long to wait, but the
 standard method is called \enquote{exponential backoff}. \\ 
 Exponential backoff depends on a parameter $c$, which we usually set to 2. After the $k$th attempt to transmit a frame,
 we will uniformly select $j$ from $\left\{0, 1, \dots, c^k - 1\right\}$, and wait $j \cdot T$ time. When a node
 transmits a frame successfully, then it resets its number of attempts counter ($k$) to 0. The attempt counters of other
 nodes remain unaffected.
-% subsubsection 1-persistent (end)
+% subsubsection Non-persistent (end)
 
 \subsubsection{p-persistent}\label{sec:p_persistent} % (fold)
 Here, we have \textbf{no} exponential backoff. In the case of a collision, then the entire frame is wasted. The nodes

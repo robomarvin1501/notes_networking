@@ -134,11 +134,11 @@ hypercube, the diameter will be $n$, the nodal degree will be $n - 1$, and the b
 1}$.
 % subsubsection Hypercubes (end)
 
-\subsubsection{Trees}\label{sec:trees} % (fold)
+\subsubsection{Binary Trees}\label{sec:trees} % (fold)
 In a tree, each node has at most 2 children. They are of fixed degree, a diameter of $\log \left(n\right)$, and $O
 \left(1\right)$ bisection bandwidth. To route between nodes $a, b$, one goes up to their common ancestor, and then back
 down to the other node.
-% subsubsection Trees (end)
+% subsubsection Binary Trees (end)
 % subsection Topology (end)
 
 \subsection{Routing}\label{sub:routing} % (fold)

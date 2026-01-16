@@ -269,7 +269,7 @@ communicate with B over layer 3 (IP, and A already knows B's IP), we need to: \b
      \end{tabular}
      \caption{Steps}
 \end{table} 
-If A does not know B's MAC, then it begins with sending an ARP request. Note that router do \textbf{not} forward ARP
+If A does not know R's MAC, then it begins with sending an ARP request. Note that router do \textbf{not} forward ARP
 messages between different networks. 
 
 % subsubsection Broadcast domains (end)
@@ -441,6 +441,7 @@ Reminder, ARP responses are unicast. Describe all the transmitted messages, and 
         3 & IP message & MAC(a) & IP(a) & MAC(R0, 3) & IP(d) & A, X, Y \\ \hline
         4 & ARP Request with IP(d) & MAC(R0, 2) & - & broadcast & - & D, E \\ \hline
         5 & ARP Response with MAC(d) & MAC(d) & - & MAC(R0, 2) & - & D \\ \hline
+        6 & IP message & MAC(R0, 2) & IP(a) & MAC(d) & IP(d) & D \\ \hline % shouldn't this be part of the table?
     \end{tabular}
     \caption{Solution}
 \end{table}
@@ -455,8 +456,8 @@ Determine if the following claims are true or false:
          B & Node $d$ will hear an ARP request from node $z$ with IP(e) & F \\ \hline
          C & Router R0 has (at least) 3 IP addresses & T \\ \hline
          D & Router R0 has (at least) 3 MAC addresses & T \\ \hline
-         E & Switch 11 has (at least) 4 IP addresses & T \\ \hline
-         F & Switch 11 has (at least) 4 MAC addresses & T \\ \hline
+         E & Switch 11 has (at least) 4 IP addresses & F \\ \hline % since when do switches have IP addresses? shouldn't this be F?
+         F & Switch 11 has (at least) 4 MAC addresses & F \\ \hline % since when do switches have MAX addresses? shouldn't this be F?
      \end{tabular}
      \caption{Solution}
 \end{table} 
