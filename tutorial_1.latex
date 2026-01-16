@@ -68,7 +68,7 @@ and analysing efficiency of protocols / networks.
 
 \subsection{Definitions}\label{sub:definitions} % (fold)
 $\Omega$ is the \textbf{sample space}, with elements $\omega_i$. It describes the states in our system. It may be either
-\textit{finite}, or \textit{infinite}. An example is in a coin toss it may be $\Omega = \left\{H, T\right\}$. An
+\textit{finite}, or \textit{infinite}. As an example, in a coin toss it may be $\Omega = \left\{H, T\right\}$. An
 \textbf{event} is a subset $A \subseteq \Omega$, so symbolises a set of possible outcomes. Events are disjoint if they
 have no intersection, and the complement of the event is every other event in $\Omega$: $\overline{A} = \Omega \setminus
 A$. \\ 
@@ -147,7 +147,7 @@ The \textbf{expected value} is the \enquote{averaged} value of a series of exper
     \E \left[X\right] = \displaystyle\sum_{i}^{}x_i \cdot \p \left(X = x_i\right)
 \]
 It has some useful properties: \begin{gather*}
-    \E \left[\displaystyle\sum_{i}^{}a_i X_i\right] = \displaystyle\sum_{i}^{}a_i \E \left[X_i\right]
+    \E \left[\displaystyle\sum_{i}^{}a_i X_i\right] = \displaystyle\sum_{i}^{}a_i \E \left[X_i\right] \\
     Var \left[X\right]= \E \left[\left[X - \E \left[X\right]^2\right]\right] = \E \left[X^2\right] - \E \left[X\right]^2
 \end{gather*}
 

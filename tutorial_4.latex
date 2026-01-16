@@ -92,7 +92,7 @@ transmit, causing a collision with A's transmission.
 
 Let us define $T_{prop}$ to be the maximum propagation time in the channel, between any two nodes. A transmission may
 collide with another within the first $T_{prop}$ seconds of it beginning to transmit. A node should decide what to do if
-the channel is occupied, and we iwll discuss the following 3 approaches: \begin{table}[H]
+the channel is occupied, and we will discuss the following 3 approaches: \begin{table}[H]
      \centering
      \begin{tabular}{|p{0.2\textwidth}|p{0.2\textwidth}|p{0.2\textwidth}|p{0.2\textwidth}|}
          \hline
@@ -452,7 +452,7 @@ This adds $r$ bits to the overhead, and only fails to detect at probability $\ap
 as a long binary number (or a polynomial over $GF(2)$), and divide it by a fixed generator polynomial. The remainder of
 this division is the CRC value, which will be added to the packet. It is used as follows: \begin{enumerate}
     \item The sender computes the CRC, and appends it to the frame 
-    \item The receiver divides the received bits (data + CRC) bu the same polynomial 
+    \item The receiver divides the received bits (data + CRC) but the same polynomial 
     \item If the remainder is 0, we assume no error; otherwise, we detected corruption
 \end{enumerate}
 
@@ -462,7 +462,7 @@ Consider the following example of crc-3: We choose a simple generator, of degree
 We have the data to send $D = 1101$. We append $r = 3$ zero bits (the degree of $G$): \[
     D \cdot x^3 = 1101 000
 \]
-and divide $1101000$ by $1011$ by using binary (XOR) long division, getting aa remainder $R = 001$. The sender appends
+and divide $1101000$ by $1011$ by using binary (XOR) long division, getting a remainder $R = 001$. The sender appends
 the CRC: \[
     \text{coded message} = D \| R = 1101 001
 \]

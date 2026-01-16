@@ -50,7 +50,7 @@ Information transmitted by \textit{any} node is received by \textit{every} other
 only applicable in LANs (Local Area Networks), when using things such as WiFi, or classical Ethernet. Another such
 example is a lecture? \\ 
 This has a few problems. Firstly, there is a very limited range. Every node that wants to listen to node $a$ needs to be
-directly connected to it. Secondly, one needs to coordinate access to the shared communication medium, to nodes cannot
+directly connected to it. Secondly, one needs to coordinate access to the shared communication medium, two nodes cannot
 transmit at once (not everyone can talk at the same time in a lecture). Finally, there is no privacy. Everyone can hear
 everything said, since you cannot say something directly to another person.
 % subsubsection Broadcast communication network (end)
@@ -76,7 +76,7 @@ transmission rate. How do we resolve this? One option is to drop packets. This i
 information is being sent for a reason, and this would just lose parts of it. A better approach is to add a buffer in
 which we save the excess packets, and read from it instead. Whenever new packets arrive, we add them to the end of the
 buffer, and read from the start of the buffer. This way, when the burst ends, we are still reading the data from the
-buffer, and have not lost packets. However, this has its downsides. Even with buffers (even if they should be of
+buffer, and have not lost packets. However, this has its downsides. Even with buffers (even if they could be of
 infinite size), packets can still be lost. Additionally, buffers can add latency to the operations, especially when the
 network is busy.
 

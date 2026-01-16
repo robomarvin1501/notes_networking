@@ -139,7 +139,7 @@ belong to the same entity. \\
 BGP is \textbf{not} shortest path routing. Different requirements may be placed on the route. For example, Google might
 require the cheapest route, Verizon might want the cheapest, but Comcast and AT\&T might want routes that avoid each
 others networks. \\ 
-BGP is critical for routing in the internet. For example, also 50\% of Skype disruptions are BGP related, and every year
+BGP is critical for routing in the internet. For example, almost 50\% of Skype disruptions are BGP related, and every year
 or so, a serious BGP related Internet outage makes the news. It is notoriously vulnerable to attacks.
 
 \subsubsection{Routing overview}\label{sec:routing_overview} % (fold)

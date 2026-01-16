@@ -86,7 +86,7 @@ allowing innovation. For example, HTTP in the application layer, vs SMTP.
 scary to us computer scientists. \\ 
 \textbf{Interface}: Specifies how to send, and receive bits, including things such as timing, and how to avoid both
 transmitting at the same time, thus losing data. \\
-\textbf{Protocols}: A coding scheme that is used to represent bits, voltage levels, the during of a bit, and so on. \\ 
+\textbf{Protocols}: A coding scheme that is used to represent bits, voltage levels, the duration of a bit, and so on. \\ 
 \textbf{Examples}: Optical, wireless, Ethernet cables...
 % subsection Physical layer (end)
 

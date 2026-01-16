@@ -84,7 +84,7 @@ ID. Switches all listen to all distances announcements on each port. They mark t
 
 \begin{definition}[Link cost]
     The \textbf{link cost} is a cost associated with each port on each switch (\enquote{weight} of connection to
-    broadcast domain). We default to 1. This cost can be aiether manually, or automatically assigned, and can be used to
+    broadcast domain). We default to 1. This cost can be either manually, or automatically assigned, and can be used to
     alter the path to the root switch.
 \end{definition}
 

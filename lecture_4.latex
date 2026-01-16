@@ -64,7 +64,7 @@ signal.
 % subsubsection Wireless (end)
 
 \subsection{MAPs}\label{sub:maps} % (fold)
-An idea MAP is as follows: \begin{enumerate}
+An ideal MAP is as follows: \begin{enumerate}
     \item When one node wants to transmit, it can send at rate $R$
     \item When $M$ nodes want to transmit, each can send at an average rate $\displaystyle\frac{R}{M}$
     \item It is fully decentralised, there is no node that coordinates transmissions 
@@ -89,7 +89,7 @@ ALOHA, and ALOHA.
 % subsubsection Goodput and throughput (end)
 
 \subsubsection{Slotted ALOHA}\label{sec:slotted_aloha} % (fold)
-We assume that all frames are the same size, and that time is transmitted into equal size slots (each slot is the time
+We assume that all frames are the same size, and that time is divided into equal size slots (each slot is the time
 to transmit one frame). Nodes start to transmit only at the beginning of the slot, and they are synchronised. If 2 or
 more nodes transmit in a slot, all nodes detect the collision. \\ 
 They operate as follows: When a node needs to transmit a frame, it transmits it in the next slot. If there is no

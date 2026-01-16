@@ -34,7 +34,7 @@
 \newcommand{\1}{\ensuremath{\mathbbm{1}}}
 \newcommand{\B}{\ensuremath{\mathbbm{B}}}
 
-\title{Lecture 6}
+\title{Lecture 11}
 \author{Gidon Rosalki}
 \date{2026-01-04}
 
@@ -51,7 +51,7 @@ message to the recipient when there is no need. \\
 It is important that messages are often sent before their ACK arrives, in order to save time. However, TCP uses
 \textit{cumulative ACK}, meaning that if ACK(1) was lost, but ACK(2) was received, since ACK(2) implies ACK(1). Since
 the ACK values are comprised of the cumulative sum of the number of received bytes, should message 1 not arrive, but
-message 2 yes arrive, then the ACK value for message 2 will not agree with the expected ACK value, and the sender will
+message 2 does arrive, then the ACK value for message 2 will not agree with the expected ACK value, and the sender will
 know that there was a missed message further back that should be resent.
 
 We need to find a method to set the timeout value. It needs to be longer than the round trip time (RTT), but this RTT
@@ -117,9 +117,9 @@ As we have stated, there are two families of transport layer protocols. The prot
 like UDP, primarily used for time sensitive applications (VoIP, IPTV, online gaming), and servers answering small
 queries from many clients (DNS), and window based congestion control protocols, like TCP. 
 
-TCP sends a window of packets, in every RTT. This is t say, that it sends $W$ packets, where $W$ is the window size.
+TCP sends a window of packets, in every RTT. This is to say, that it sends $W$ packets, where $W$ is the window size.
 This way, when the RTT ends, the sender receives the ACK of the first packet in the window. In order to use this, one
-needs to find the size of $W$. Now, if we limit the numebr of packets in teh network to the window $W$, then the source
+needs to find the size of $W$. Now, if we limit the numebr of packets in the network to the window $W$, then the source
 rate is \[
     \text{Source rate}  =W \cdot \displaystyle\frac{MSS}{RTT}
 \]
