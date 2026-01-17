@@ -224,8 +224,8 @@ retries, where each retry consists of $L$ packets? \\
 % subsubsection Question 2 (end)
 
 \subsubsection{Question 3}\label{sec:question_} % (fold)
-Assuming that $T_{pt} = T_{ack} = 0$, ad the receiver is ready to acscept the packet, what is the expected time to
-successfully transmit a pcaket?
+Assuming that $T_{pt} = T_{ack} = 0$, and the receiver is ready to accept the packet, what is the expected time to
+successfully transmit a packet?
 
 \textit{ Sol. }\begin{gather}
     \text{First try: } t_0 = T_{packet} \\
