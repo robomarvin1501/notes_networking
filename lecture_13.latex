@@ -1,0 +1,107 @@
+\documentclass[a4paper]{article}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{mathtools}
+\usepackage{blindtext}
+\usepackage{multicol}
+\usepackage{graphicx}
+\usepackage{placeins}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage[bookmarks=true]{hyperref}
+\usepackage{bookmark}
+\usepackage{bbm}
+\usepackage{wrapfig}
+\usepackage{tabularx}
+\usepackage[autostyle=true]{csquotes}
+\graphicspath{ {./images/} }
+\usepackage[bottom=0.5cm, right=1.5cm, left=1.5cm, top=1.5cm]{geometry}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{exercise}{Exercise}
+\newtheorem{example}{Example}
+\newtheorem{definition}{Definition}[section]
+
+\newcommand{\R}{\ensuremath{\mathbb{R}}}
+\newcommand{\N}{\ensuremath{\mathbb{N}}}
+\newcommand{\Z}{\ensuremath{\mathbb{Z}}}
+\newcommand{\p}{\ensuremath{\mathbb{P}}}
+\newcommand{\E}{\ensuremath{\mathbb{E}}}
+\newcommand{\F}{\ensuremath{\mathcal{F}}}
+\newcommand{\1}{\ensuremath{\mathbbm{1}}}
+\newcommand{\B}{\ensuremath{\mathbbm{B}}}
+
+\title{Lecture 13}
+\author{Gidon Rosalki}
+\date{2026-01-18}
+
+
+\begin{document}
+\maketitle
+\noindent\textbf{Notice:} If you find any mistakes, please open an issue at \href{https://github.com/robomarvin1501/notes\_networking}{\texttt{https://github.com/robomarvin1501/notes\_networking}}
+\section{BGP details}\label{sec:bgp_details} % (fold)
+Firstly, we will note that BGP takes place at the \textit{application} layer. It takes place over TCP, on port 179. BGP
+connected routers establish the connection, exchange all active routes, and then exchange incremental updates while the
+connection is alive. \\ These incremental updates include \textbf{Announcement} updates, where upon selecting a new
+active route, the AS adds its own ASN to path and (optionally) advertises the path to each neighbour, and
+\textbf{Withdrawal} updates, where if the active route is no longer available, send a withdrawal message to the
+neighbours.
+
+In order to avoid loops, whenever a node (router) observes a new path, it can search if it’s
+already on the path, and if so, drop the new path. Also, note that BGP is neither a distance vector, or link state
+vector, since it is a path based protocol in the sense that we send the complete path, and not just the next hops. This
+is unlike link state, since each edge router \textbf{only} reports its routes to neighbour edge routers, and it is
+unlike distance vector, since the full paths are sent. 
+
+Let us consider these route update messages. They include the destination prefix (here denoted $d$), and the route
+attributes, including \begin{itemize}
+    \item AS path (the route through the different ASes that it took to reach the recipient)
+    \item The next hop IP address (this is the router from which the message left the current AS, such that the next AS
+        may send messages back along the route)
+\end{itemize}
+% section BGP details (end)
+
+\section{BGP (In)Stability}\label{sec:bgp_in_stability} % (fold)
+There are some structures of ASes which can cause infinite oscillation, resulting in an unstable state of the network.
+This makes the network unpredictable, and hard to debug. It might lead to the network being constantly flooded with BGP
+updates, using up all the available bandwidth. This instability can also cause deteriorated instability. 
+
+We want to guarantee that BGP will always reach a stable state, and ideally this should happen quickly. This is called
+BGP \textbf{safety}. There are two practical mechanisms for enabling this: \begin{enumerate}
+    \item Penalising \enquote{flaps} (route fluctuations)
+    \item Enforcing a minimum time interval between BGP updates (to the same neighbour).
+\end{enumerate}
+These are only occasionally used, since they are only occasionally effective.
+
+We will note that the internet is generally fairly stable. BGP routes to popular destinations tend to be the same for
+around 10 days, and most traffic in the internet travels along stable routes. Part of the reasoning here is that there
+are no customer, provider cycles. ASes prefer to use their customers for routing, than their providers, since that way
+they make money. Additionally, ASes do not announce their provider learned routes to other providers, if only from a
+money making standpoint. 
+
+\subsection{Gao-Rexford conditions}\label{sub:gao_rexford_conditions} % (fold)
+If the following 3 conditions hold, then the BGP network is stable.
+We can guarantee BGP safety in a network if \textbf{all} the following conditions hold: \begin{enumerate}
+    \item \textbf{Topology condition}: No customer-provider cycles in the AS graph
+    \item \textbf{Preference condition}: Prefer customer learned routes over provider, and peer learned routes (go by
+        preference through paying customers, than through peers)
+    \item \textbf{Export condition}: Prover and peer learned routes are exported \textit{only} to customers
+\end{enumerate}
+
+So, to summarise BGP, it enables network operators great expressiveness at the potential cost of persistent route
+oscillations. Protocol divergence is bad for networks, since the network becomes unpredictable, and there is performance
+degradation. Gao-Rexford conditions imply BGP safety, which is a partial explanation for the Internet’s relative
+stability.
+% subsection Gao-Rexford conditions (end)
+% section BGP (In)Stability (end)
+
+\section{Inter vs Intra}\label{sec:inter_vs_intra} % (fold)
+An AS is \textbf{not} a single node, but rather is comprised of multiple routers. Thus, we need to distribute BGP
+information within the AS. In order to achieve this, Internal BGP (iBGP) sessions are held between the routers of a
+single AS. 
+% section Inter vs Intra (end)
+
+\end{document}
