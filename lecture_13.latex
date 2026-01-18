@@ -102,6 +102,75 @@ stability.
 An AS is \textbf{not} a single node, but rather is comprised of multiple routers. Thus, we need to distribute BGP
 information within the AS. In order to achieve this, Internal BGP (iBGP) sessions are held between the routers of a
 single AS. 
+
+To make this happen, we need to join together information from iBGP, and IGP (Interior Gateway Protocol). iBGP announces
+reachability to \textit{external} destinations, and maps a destination prefix to an egress point (we can reach
+128.112.0.0/16 from 192.0.2.1), and IGP is used to compute paths \textit{within} an AS, and masp an egress point to an
+outgoing link (we may reach the external IP 192.0.2.1 via the AS internal IP 10.1.1.1). \\ 
+IGP is shortest path routing with static link weights. It computes the shortest paths to other routers based on the link
+weights, in order to determine the next hop to every other router. The link weights are configured by the network
+administrator.
+
+We will note that since an AS has many edge routers, it may have numerous connections to a neighbouring AS that are
+equivalent. This means that multiple border routers may learn good routes with the same LocalPref and AS-path length. We
+are thus left with the question of how the internal routers know which egress point to use. To resolve this we use
+\textit{hot potato routing}. Each router selects the \textit{closest} egress point based on IGP link weights. So, to put
+it all together, a route from a router within the AS, to another AS is chosen by: \begin{enumerate}
+    \item Highest \textbf{local preference}
+    \item \textbf{Shortest} AS path
+    \item \textbf{Closest} egress point 
+    \item \textbf{Arbitrary} tie break
+\end{enumerate}
+
+\subsection{Summary}\label{sub:summary} % (fold)
+ASes are networks of routers, which combine together iBGP, and IGP routing. iBGP announces reachability to
+\textit{external} destinations, and IGP computes routes \textit{within} the AS.  
+% subsection Summary (end)
 % section Inter vs Intra (end)
+
+\section{BGP security}\label{sec:bgp_security} % (fold)
+BGP is built on trust, and is thus exceedingly vulnerable to bad actors. Every few years, there is a serious BGP based
+attack that makes the news. 
+\subsection{Session security}\label{sub:session_security} % (fold)
+BGP sessions run over TCP. There is a TCP connection between neighbouring BGP routers, and they send their BGP messages
+over this TCP connection. This makes BGP vulnerable to attacks on TCP. One could eavesdrop by tapping the link to infer
+routing policies, tamper with the packets that are traversing the link, by dropping, modifying, or adding packets, thus
+changing, filtering, or replaying BGP routes. One may also reset the session, and congest the link.
+
+Fortunately, one may quite easily defend a BGP session. Two end points can use known IP addresses, and ports to
+communicate, and agree to authenticate and encrypt their messages. Additionally, there is often very limited physical
+access to a link, since for most of these, one needs direct physical access, and the link is often located in a
+(somewhat) secured building.
+% subsection Session security (end)
+
+\subsection{Manipulating BGP}\label{sub:manipulating_bgp} % (fold)
+BGP is eminently vulnerable to manipulation. In 2008, Pakistan ordered their ISPs to block YouTube. To do this, their
+ASes started publishing that YouTube is at a different location, which led nowhere. This leaked (accidentally) to the
+wider internet, and brought YouTube down for a few hours. This happens easily since there is no proof that it is
+actually true that the person claiming to own an IP block \textit{actually} owns that IP block, so BGP simply believes
+that whoever claims to own it, actually does own it. \\ 
+This is called Prefix Hijacking, where two ASes are competing as to who owns a prefix. The hijacking AS needs a router
+with BGP sessions that is configured to originate the prefix. This could happen because a network operator makes a
+mistake, a network operator launches an attack, or an outsider breaks into the router, and reconfigures it. \\ 
+
+The targeted AS may not even notice that prefix hijacking is going on. If targeted AS tries to snoop, and check, they
+may only experience degradation, and not the full hijack. The best way to diagnose it is to analyse updates from
+\textit{many} different vantage points, by launching traceroute from many different vantage points. 
+
+\subsection{Origin Authentication}\label{sub:origin_authentication} % (fold)
+To defend against prefix hijacks, there are many best common practices, such as filtering routes based off their prefix
+(so for example, stubs should only announce their own IP prefixes), and packet filters to avoid unwanted traffic. This
+is not good enough, it depends on vigilant application of BCPs, and does not handle misconfiguration (malicious, or
+otherwise). It also does not address the fundamental question of who own what IP block. 
+
+The proposed solution to this is called \textbf{Origin Authentication}. Here, we use a secure database that maps IP
+prefixes to owner ASes. This is imperfect, since a bad actor can convince others that they have a nonexistant link,
+which is shorter than the standard link from it to some IP prefix. This attracts both the sources that want a shortest
+link, and the sources that are trying to avoid the ASes that the bad actor has cut out of its route. 
+
+
+% subsection Origin Authentication (end)
+% subsection Manipulating BGP (end)
+% section BGP security (end)
 
 \end{document}
