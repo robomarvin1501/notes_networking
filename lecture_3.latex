@@ -92,7 +92,7 @@ transmitting at the same time, thus losing data. \\
 
 \subsection{(Data) link layer}\label{sub:_data_link_layer} % (fold)
 \textbf{Service}: Enable hosts to exchange message \enquote{frames}, using abstract (but local) addresses, rather than
-direct physical connections. Here there are many hosts on the same LAN, and they send messages to their local MAC addresses,
+direct physical connections. Here there are many hosts on the same LAN, and they send messages to their MAC addresses,
 rather than down the physical wire. \\ 
 \textbf{Interface}: Send frames to other local hosts (ie, hosts on the same LAN), and receive messages addressed to this
 host. \\ 

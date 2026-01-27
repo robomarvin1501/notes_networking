@@ -48,7 +48,7 @@ Communication networks can be classified based off how the nodes exchange inform
 \subsection{Broadcast communication network}\label{sec:broadcast_communication_network} % (fold)
 Information transmitted by \textit{any} node is received by \textit{every} other node in the network. This is usually
 only applicable in LANs (Local Area Networks), when using things such as WiFi, or classical Ethernet. Another such
-example is a lecture - everyone can here what every other person in the room says. \\ 
+example is a lecture - everyone can hear what every other person in the room says. \\ 
 This has a few problems. Firstly, there is a very limited range. Every node that wants to listen to node $a$ needs to be
 directly connected to it. Secondly, one needs to coordinate access to the shared communication medium, two nodes cannot
 transmit at once (not everyone can talk at the same time in a lecture). Finally, there is no privacy. Everyone can hear

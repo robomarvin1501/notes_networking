@@ -266,7 +266,7 @@ Consider the following commodities: \begin{gather}
     \left(C, E, 3\right) \\ 
 \end{gather}
 
-What's the optimal solution for the $MinConj-MCF_{OPT}$ problem in this scenario? Show a flow that achieves that solution,
+What's the optimal solution for the $MinCong-MCF_{OPT}$ problem in this scenario? Show a flow that achieves that solution,
 and explain your answer.
 
 \subsubsection{Solution}\label{sec:solution} % (fold)

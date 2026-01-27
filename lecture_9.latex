@@ -135,7 +135,7 @@ hypercube, the diameter will be $n$, the nodal degree will be $n - 1$, and the b
 % subsubsection Hypercubes (end)
 
 \subsubsection{Binary Trees}\label{sec:trees} % (fold)
-In a tree, each node has at most 2 children. They are of fixed degree, a diameter of $\log \left(n\right)$, and $O
+In a binary tree, each node has at most 2 children. They are of fixed degree, a diameter of $\log \left(n\right)$, and $O
 \left(1\right)$ bisection bandwidth. To route between nodes $a, b$, one goes up to their common ancestor, and then back
 down to the other node.
 % subsubsection Binary Trees (end)
