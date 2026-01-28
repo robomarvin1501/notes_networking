@@ -60,7 +60,9 @@ value varies. If it is too short then there will be a premature timeout, and we 
 However, if it is too long, then there will be a slow reaction to segment loss. As we see, we need a good estimate of
 the RTT. A method for estimating this is \textbf{SampleRTT}, where we measure the time from the segment transmission
 until the ACK receipt, ignoring retransmissions. However, this will vary, and we want the estimated RTT to be more
-consistent, so we take the \textit{rolling average} of the most recent $n$ measurements, rather than just the last one. \\ 
+consistent, so we take the exponentially weighted average of the most recent $n$ measurements, rather than just the last
+one. This exponential weighting ensures that the older history decays over time, and a much larger focus is put on
+recent measurements. \\ 
 To calculate the actual EstimatedRTT, we \[
     \text{EstimatedRTT} = \left(1 - \alpha\right) \cdot \text{EstimatedRTT}  + \alpha \cdot \text{SampleRTT}
 \] 
