@@ -66,7 +66,7 @@
 \maketitle
 \noindent\textbf{Notice:} If you find any mistakes, please open an issue at \href{https://github.com/robomarvin1501/notes\_networking}{\texttt{https://github.com/robomarvin1501/notes\_networking}}
 \section{IEEE 802.11}\label{sec:ieee_} % (fold)
-In CSMA/CD, we rant he idea that we listen first, then transmit, and detect collisions. This does not work so well in
+In CSMA/CD, we ran the idea that we listen first, then transmit, and detect collisions. This does not work so well in
 WiFi, since it is difficult to detect collisions when transmitting, due to weak receiving signals. We cannot sense all
 collisions in any case, there may be terminals who transmit too weak for a particular node to notice. Our new goal is
 to \textit{avoid} collisions (CSMA/C(ollision) A(voidance)). \\

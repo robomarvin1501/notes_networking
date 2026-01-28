@@ -47,7 +47,7 @@ So far, the routing protocols that we have discussed generates forwarding tables
 State. This is however, only aimed at small networks, and not appropriate for the wider internet. We need to extend this
 to the wider internet, which allows for different interactions between different networks, and operators, that may be
 unwilling to work with each other, or perhaps have different requirements over how the packets should be sent.
-Effectively, we have added \textit{politics} into the picture, which complicate everything.
+Effectively, we have added \textit{politics} into the picture, which complicates everything.
 
 % section Introduction (end)
 

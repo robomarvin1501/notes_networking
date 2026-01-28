@@ -54,7 +54,7 @@ When considering layer 3, we want to connect LANs, or IP subnets. For our uses, 
 
 \subsection{Topology}\label{sub:topology} % (fold)
 This is how the components are connected. It has some important properties: \begin{itemize}
-    \item Diameter: The maximum distance between any two nodes in teh network (measured in hop count / number of links)
+    \item Diameter: The maximum distance between any two nodes in the network (measured in hop count / number of links)
     \item Nodal degree: How many links connect to a node 
     \item Bisection bandwidth: The lowest bandwidth between half the nodes, and the other half of the nodes, across all
         such partitions (consider MAX CUT from algorithms)
@@ -134,16 +134,16 @@ hypercube, the diameter will be $n$, the nodal degree will be $n - 1$, and the b
 1}$.
 % subsubsection Hypercubes (end)
 
-\subsubsection{Trees}\label{sec:trees} % (fold)
-In a tree, each node has at most 2 children. They are of fixed degree, a diameter of $\log \left(n\right)$, and $O
+\subsubsection{Binary Trees}\label{sec:trees} % (fold)
+In a binary tree, each node has at most 2 children. They are of fixed degree, a diameter of $\log \left(n\right)$, and $O
 \left(1\right)$ bisection bandwidth. To route between nodes $a, b$, one goes up to their common ancestor, and then back
 down to the other node.
-% subsubsection Trees (end)
+% subsubsection Binary Trees (end)
 % subsection Topology (end)
 
 \subsection{Routing}\label{sub:routing} % (fold)
 We focus for now on routing within a single organisation, called intradomain routing. We will discuss interdomain
-routing later on. We are effective discussing a network of routers, where the links represent IP subnets. \\ 
+routing later on. We are effectively discussing a network of routers, where the links represent IP subnets. \\ 
 Upon receiving a packet, our routing algorithm needs to, very quickly, decide what to do with it, or in other words,
 decide on which link it should send the packet. In order to achieve this, there is often a forwarding table, where one
 matches between header values, and output links. Forwarding is performing this action, and routing is the engine that
@@ -265,7 +265,7 @@ organisations, by optimising static link weights. We will soon discuss congestio
 transport layer (L4), through protocols like TCP and UDP.
 
 Traffic engineering is tuning the routing protocol configuration to optimise network performance (often by changing the
-static weights). This is dne through: \begin{itemize}
+static weights). This is done through: \begin{itemize}
     \item \textbf{Measurement}: Measuring the topology (as done at the beginning of the lecture), and the traffic
         pattern (passively inspecting the traffic)
     \item \textbf{Network wide models}: Making representations of the topology, and traffic
@@ -292,7 +292,7 @@ weights to determine the next hop to every other router. The link weights are co
 
 \subsubsection{ECMP}\label{sec:ecmp} % (fold)
 In Equal Cost Multipath (ECMP), each router computes the shortest paths to each other router, based on the configured
-link weights, and splits traffic designed for said router evenly between all the nodes between them. 
+link weights, and splits traffic designated for said router evenly between all the shortest paths. 
 
 So, our objective given the multicommodity input is to output link weights such that ECMP flow is the optimal solution
 (with respect to the specific objective function). We have used the word \enquote{optimal} here, which assumes that

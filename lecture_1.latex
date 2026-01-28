@@ -48,7 +48,7 @@ Homework will make up 25\% of the final grade, and are done in pairs. There are 
 typed. Additionally, 2 interviews will be carried out during the semester, on the homework. Failing to pass the
 interview results in a failure of the homework in question. There are 2 bonus points available for attendance. 
 
-We will mostly follow the book \textit{Computer Networking: A Top Down Approach} (5th of 6th edition) by J. Kurose and
+We will mostly follow the book \textit{Computer Networking: A Top Down Approach} (5th or 6th edition) by J. Kurose and
 K. Ross. 
 
 \subsection{Key concepts}%
@@ -61,7 +61,7 @@ of the internet?}
 Networking is particularly interested due to the number of unsolved challenges. These include questions such as security
 and privacy, performance, evolvability (ability to update the networking protocols), and so on.
 
-In this course, we will start with with fundamental concepts, and terminology, and finish by building the internet from
+In this course, we will start with fundamental concepts, and terminology, and finish by building the internet from
 the ground up.
 
 \section{Experience}%
@@ -177,7 +177,7 @@ conversation the data belongs. For example, each slot 0 belongs to the blue conv
 synchronisation between the sender, and the receiver. We also need to dynamically bind a slot to a conversation. If a
 conversation does not use its circuit, then capacity is lost. 
 
-This sort of system has several strength. It has predictable performance, with known delays, and no drops. However, it
+This sort of system has several strengths. It has predictable performance, with known delays, and no drops. However, it
 comes with a few weaknesses: \begin{enumerate}
     \item It is not resilient to failure: Any failure along the path will prevent transmission. The entire transmission
         would then have to be restarted. We call this sort of delivery model \enquote{all or nothing} 

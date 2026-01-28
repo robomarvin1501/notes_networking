@@ -89,7 +89,7 @@ the Poisson assumption.
 A Poisson process $\left\{N_t | t \geq 0\right\}$ with a rate of $g$ is a counting process where \begin{itemize}
     \item The number of events in any two disjoint intervals is independent 
     \item The number of events in any interval of length $T$ is a Poisson random variable with parameter $gT$. This
-        depends o the interval's \textit{length} and not its \textit{timing}
+        depends on the interval's \textit{length} and not its \textit{timing}
     \item The sum of independent Poisson random variables is itself a Poisson random variable: \[
             X \sim Poi \left(\lambda_1\right),\ Y \sim Poi \left(\lambda_2\right) \implies X + Y \sim Poi
             \left(\lambda_1 + \lambda_2\right)
@@ -101,7 +101,7 @@ A Poisson process $\left\{N_t | t \geq 0\right\}$ with a rate of $g$ is a counti
      \begin{tabular}{|c|c|c|}
          \hline
          Notation & Explanation & Units \\ \hline
-         $g$ & Rate of total messages )(both new and failed) that are up for transmission & $\frac{1}{sec}$ \\ \hline
+         $g$ & Rate of total messages (both new and failed) that are up for transmission & $\frac{1}{sec}$ \\ \hline
          $G = gT$ & Average number of transmitted (successful and failed) messages in time interval $T$ & None  \\ \hline
          $P_{suc}$ & Probability of a (single) successful transmission (ie, no collision occurred) & None \\ \hline
      \end{tabular}
@@ -195,10 +195,10 @@ that \begin{align*}
     P_{t = T} \left(X = i\right) &= \displaystyle\frac{\left(gT\right)^i}{i!}e^{-gT}
 \end{align*}
 A successful $l$ message will be with the probability \[
-    P_{suc,l} = \left(1 - p \right) \cdot P_{t = l} \left(k = 1\right) = \left(1 - p\right)gle^{gl}
+    P_{suc,l} = \left(1 - p \right) \cdot P_{t = l} \left(k = 1\right) = \left(1 - p\right)gle^{-gl}
 \]
 and a successful $s$ message will be the probability \[
-    P_{suc, s} p \cdot P_{t=l} \left(k = 1\right) = pgle^{-gl}
+    P_{suc, s} = p \cdot P_{t=l} \left(k = 1\right) = pgle^{-gl}
 \]
 
 What is the goodput of the network? \begin{align*}
@@ -235,7 +235,7 @@ and the arrival rate of an $l$ bit message is \[
 \end{figure}
 What is the probability that we successfully send an $l$ message $P_{suc, l}$? The probability that no $l$ message is
 sent between $-l, -s$ is \[
-    e^{-g_l \left(l - s\right)} = e^{- \left(1 - p\right) \left(l - s\right)}
+    e^{-g_l \left(l - s\right)} = e^{-g \left(1 - p\right) \left(l - s\right)}
 \]
 The probability that no $l$, nor $s$ message is sent between $\left(-s, 0\right)$ is \[
     P_{t = s} \left(k = 0\right) = e^{- \left(g_l + g_s\right)s} = e^{-gs}

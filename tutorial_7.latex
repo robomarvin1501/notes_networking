@@ -47,7 +47,7 @@ We have spoken about DHCP, IP, DNS, and ARP, which all aid us in communicating i
 information beyond the router that is located between our LAN, and the rest of the network, we have stated that this
 happens, but stopped at the router. Today, we will discuss what the router does.
 
-Routing is the process of selected a path for the traffic in a network, or between multiple networks. Sometimes packets
+Routing is the process of selecting a path for the traffic in a network, or between multiple networks. Sometimes packets
 must cross a few networks to reach the target network, so the relaying of a packet from one network interface to another
 is called \textit{forwarding}. 
 
@@ -82,7 +82,7 @@ distances that are unknown. The vector will continue updating until stabilisatio
 The main idea (from the router's perspective): Each node keeps the DV of its neighbours, and if it gets an update from
 its neighbour, or one of its edges, it \begin{enumerate}
     \item Updates the DV 
-    \item Distributed the updated DV to all neighbours
+    \item Distributes the updated DV to all neighbours
 \end{enumerate}
 This is repeated until there are no further changes in this router's DV. As we can see, this breaks into two sub
 sections: \begin{enumerate}
@@ -98,7 +98,7 @@ sections: \begin{enumerate}
             \item Send the DV to all neighbours
         \end{itemize}
     \item Update: \begin{itemize}
-            \item If some neighbour's DV, \textbf{or} one of hte edge's weights change: \[
+            \item If some neighbour's DV, \textbf{or} one of the edge's weights change: \[
                     D_s \left(y\right) = \displaystyle\min_{v \in \Gamma \left(s\right)} \left\{c \left(s, v\right) +
                     D_v \left(y\right)\right\} 
                 \]

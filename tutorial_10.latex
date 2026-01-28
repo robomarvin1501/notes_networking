@@ -244,14 +244,14 @@ the minimal window of the two, meaning that the actual window size is: \[
 % section TCP (end)
 
 \section{Network Address Translation (NAT)}\label{sec:network_address_translation_nat_} % (fold)
-NAT is a mechanism that iis optionally used by routers to reduce the number of devices using public IPv4 addresses,
+NAT is a mechanism that is optionally used by routers to reduce the number of devices using public IPv4 addresses,
 instead reusing a pool of private addresses. Recall that there are not many IPv4 addresses in the world, only around 4
 billion, so we use NAT such that all the devices behind a single router have only the router's public IPv4 address, and
 it handles multiplexing the data to the relevant address within the network. This also has a possible privacy
 improvement. 
 
 Private IP addresses were thus constructed, these are reserved addresses that can only be used inside internal (private)
-LANs, they cannot be used in connections to the internet. For a device witha  private IP address to communicate with
+LANs, they cannot be used in connections to the internet. For a device with a private IP address to communicate with
 devices outside of its LAN, its IP address needs to be translated to a public IP address. There are a few private
 ranges, such as 10.0.0.0 - 10.255.255.255, 172.16.0.0 - 172.31.255.255, and 192.168.0.0 - 192.168.255.255. 
 

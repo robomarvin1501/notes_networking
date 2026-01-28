@@ -131,7 +131,7 @@ So we can see that \[T_{out} \geq 2T_{prop} + T_{ack} + T_{pt}\]
 \end{example}
 
 Let us now consider the goodput. Let us assume that we use the whole bandwidth, and on failure, the receiver does not
-send NACK, but just ignores teh packet. Packets /ACKs fail with probability \[
+send NACK, but just ignores the packet. Packets /ACKs fail with probability \[
     p \implies X \sim Geo \left(\left(1 - p\right) ^ {2}\right)
 \]
 The expected number of tries until success (i.e. all attempts except the last fail): \[
@@ -140,9 +140,9 @@ The expected number of tries until success (i.e. all attempts except the last fa
 The goodput is the ratio of effective transmission time, and total transmission time. Let $T_{packet}$ be the
 transmission time of a data packet. So: \[
     \text{Goodput}  = \displaystyle\frac{T_{packet}}{\left(\frac{1}{\left(1 - p\right) ^ {2}} - 1\right)\left(T_{packet}
-    + T_{out}\right)}
+    + T_{out}\right) + \left(T_{packet} + 2T_{prop} + T_{ack} + T_{pt}\right)}
 \]
-If $T_{out}$ is set to teh minimal value that we previously calculated $T_{out} = 2T_{prop} + T_{ack} + T_{pt}$ then \[
+If $T_{out}$ is set to the minimal value that we previously calculated $T_{out} = 2T_{prop} + T_{ack} + T_{pt}$ then \[
     \text{Goodput} = \displaystyle\frac{T_{packet}}{\left(\frac{1}{\left(1 - p\right) ^ {2}} - 1\right)\left(T_{packet}
     + T_{out}\right)}
             = \displaystyle\frac{T_{packet} \left(1 - p\right) ^ {2}}{T_{packet} + T_{out}}
@@ -172,7 +172,7 @@ The sender has a timer for each transmitted packet, which is started after sendi
 
 Consider if we have a window size of 8, and use 3 bits to represent it. We can then desynchronise if all 8 packets are
 received, but all 8 ACKs are lost, since the sender will return to the beginning of the window, but the receiver will
-assume that this is new data. We can resolve this by for a window size of $n$, we use $\left\lceil \log_2 \left(n\right)
+assume that this is new data. We can resolve this if for a window size of $n$, we use $\left\lceil \log_2 \left(n\right)
 \right\rceil  + 1$ bits to represent it. 
 
 \subsection{Questions}\label{sub:questions} % (fold)
@@ -224,8 +224,8 @@ retries, where each retry consists of $L$ packets? \\
 % subsubsection Question 2 (end)
 
 \subsubsection{Question 3}\label{sec:question_} % (fold)
-Assuming that $T_{pt} = T_{ack} = 0$, ad the receiver is ready to acscept the packet, what is the expected time to
-successfully transmit a pcaket?
+Assuming that $T_{pt} = T_{ack} = 0$, and the receiver is ready to accept the packet, what is the expected time to
+successfully transmit a packet?
 
 \textit{ Sol. }\begin{gather}
     \text{First try: } t_0 = T_{packet} \\

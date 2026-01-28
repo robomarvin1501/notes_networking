@@ -50,7 +50,7 @@ We covered traffic engineering in the network layer (L3). We can also perform co
 \section{Transport layer}\label{sec:transport_layer} % (fold)
 The purpose of transport services, and protocols is to provide \textit{logical communication} between app processes
 running on different hosts. Transport protocols run in the end systems, the nodes on the network, rather than purely on
-the switches, or routers. On the sending side, the node breaks app messages into segments which it passes to the nwework
+the switches, or routers. On the sending side, the node breaks app messages into segments which it passes to the network
 layer, and the receiver reassembles segments received in the network layer back into messages for the application layer.
 There is more than 1 transport protocol available to applications: UDP and TCP. \\ 
 TCP provides reliable, in order delivery. It includes congestion control, flow control, and setting up / closing

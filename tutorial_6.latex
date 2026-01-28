@@ -269,7 +269,7 @@ communicate with B over layer 3 (IP, and A already knows B's IP), we need to: \b
      \end{tabular}
      \caption{Steps}
 \end{table} 
-If A does not know B's MAC, then it begins with sending an ARP request. Note that router do \textbf{not} forward ARP
+If A does not know R's MAC, then it begins with sending an ARP request. Note that router do \textbf{not} forward ARP
 messages between different networks. 
 
 % subsubsection Broadcast domains (end)
@@ -291,7 +291,7 @@ the address 223.1.2.2, and LAN-B has the DHCP server. For H1 to get an IP addres
      \centering
      \begin{tabular}{|c|c|c|c|c|}
          \hline
-         Message & SRC MAC & DST MAC & SRC IP & DST IP \\ \hline
+         Message & SRC MAC & SRC IP & DST MAC & DST IP \\ \hline
          DHCP discover & MAC(H1) & 0.0.0.0 & broadcast & 255.255.255.255 \\ \hline
          disc. (GIADDR=223.1.1.3) & MAC(R0, 2) & IP(R0,2) & MAC(DHCP) & IP(DHCP) \\ \hline
          DHCP offer (223.1.1.x) & MAC(DHCP) & IP(DHCP) & MAC(R0, 2) & IP(223.1.1.3) \\ \hline 
@@ -319,7 +319,7 @@ www.google.com):
     \includegraphics[scale=0.2]{tutorial_6_dns_resolving}
     \caption{Simplified DNS lookup}
 \end{figure}
-We begin by asking the root for the entire address. The root responds with with the address of the TLD, which resolves
+We begin by asking the root for the entire address. The root responds with the address of the TLD, which resolves
 the sub parts of the com TLD. We are then sent to the authoritative DNS server of google, which will return the IP to
 the resolver, which may then be transferred onto the host. 
 
@@ -331,7 +331,7 @@ There are two main types of DNS records: \begin{itemize}
 There are also additional types, not discussed here. 
 
 There are currently 13 root servers, called A to M. There are various TLD servers (.com, .net, .edu, .org, etc.). Each
-DNS response (a RR - Resource Record), contains a TTL value for cache storage time. Since NAme server are identified by
+DNS response (a RR - Resource Record), contains a TTL value for cache storage time. Since name servers are identified by
 name (e.g. ns.google.com), there could be circular dependencies, one is directed to the authoritative name server which
 is contained within the authoritative name server. A Name Server might add an IP address as a \enquote{glued RR} to help
 the process.
@@ -367,13 +367,13 @@ computer from the moment it’s connected to the network until the first respons
          2 & DHCP offer & DHCP server & DHCP server & broadcast & 255.255.255.255 \\ \hline
          3 & DHCP request & PC & 0.0.0.0 & broadcast & 255.255.255.255 \\ \hline
          4 & DHCP Ack (IP,DNS ...) & DHCP server & DHCP server & broadcast & 255.255.255.255 \\ \hline
-         5 & ARP request – DNS server & PC - & broadcast & - & - \\ \hline
+         5 & ARP request – DNS server & PC & - & broadcast & - \\ \hline
          6 & ARP response – DNS server & DNS server & - & PC & - \\ \hline
          7 & DNS request – youtube.com & PC & PC & DNS server & DNS server \\ \hline
          8 & DNS response – youtube.com & DNS server & DNS server & PC & PC \\ \hline
          9 & ARP request – default gw & PC & - & broadcast & - \\ \hline
          10 & ARP response – default gw & Default gw & - & PC & - \\ \hline
-         11 & HTTP request & PC & PC Default gw & IP(youtube.com) & - \\ \hline
+         11 & HTTP request & PC & PC & Default gw & IP(youtube.com) \\ \hline
          12 & HTTP response & Default gw & IP(youtube.com) & PC & PC \\ \hline
      \end{tabular}
      \caption{Solution}
@@ -441,6 +441,7 @@ Reminder, ARP responses are unicast. Describe all the transmitted messages, and 
         3 & IP message & MAC(a) & IP(a) & MAC(R0, 3) & IP(d) & A, X, Y \\ \hline
         4 & ARP Request with IP(d) & MAC(R0, 2) & - & broadcast & - & D, E \\ \hline
         5 & ARP Response with MAC(d) & MAC(d) & - & MAC(R0, 2) & - & D \\ \hline
+        6 & IP message & MAC(R0, 2) & IP(a) & MAC(d) & IP(d) & D \\ \hline
     \end{tabular}
     \caption{Solution}
 \end{table}

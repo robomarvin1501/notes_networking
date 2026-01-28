@@ -134,7 +134,7 @@ WiFi, and the 1G mobile network protocols. It makes the following assumptions: \
     \item $B$ - link bandwidth
     \item $L$ - number of bits in a frame
     \item Time is divided into slots of length $T = \displaystyle\frac{L}{B}$ $T$ is the time required for a message to
-        be transmitted. Successful transmissions use the entire bandwidth, and the entire time slow.
+        be transmitted. Successful transmissions use the entire bandwidth, and the entire time slot.
     \item A node can start transmitting \textit{only} at the beginning of a slot. If a message arrives in the middle of
         a slot, then it will be sent at the beginning of the next slot 
     \item \textbf{Collisions detection}: When a node \textit{finishes} transmitting a message, it can detect collisions
@@ -200,7 +200,7 @@ So the goodput of the network is \[
 \]
 
 We want to maximise the goodput of $\eta$ where: \[
-    \eta = \p \left[X_p\right] = 1 = np_{send} \left(1 - p_{send}\right)^{n - 1}
+    \eta = \p \left[X_p = 1\right] = np_{send} \left(1 - p_{send}\right)^{n - 1}
 \]
 Let us denote $p = p_{send}$, and solve for $p$: \begin{align*}
     \displaystyle\frac{d}{dp} np \left(1 - p\right)^{n - 1}  &= n \cdot \left(1 - p\right)^{n - 1} + np \cdot \left(n -
